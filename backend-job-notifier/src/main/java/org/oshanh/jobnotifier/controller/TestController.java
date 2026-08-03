@@ -1,6 +1,7 @@
 package org.oshanh.jobnotifier.controller;
 
 import lombok.AllArgsConstructor;
+import org.oshanh.jobnotifier.dto.Job;
 import org.oshanh.jobnotifier.model.Topjobs;
 import org.oshanh.jobnotifier.service.NotificationService;
 import org.oshanh.jobnotifier.service.ScrapeService;
@@ -25,6 +26,11 @@ public class TestController {
     @GetMapping(value = "test-gmail")
     public void testGmail (){
         notificationService.sendGmailNotification("oshanharshad3@gmail.com","Test Email","Test Body");
+    }
+
+    @GetMapping(value = "scrape-airport")
+    public List<Job> testAirportScrape() {
+        return scrapeService.scrapeAirportJobs();
     }
 
 }
