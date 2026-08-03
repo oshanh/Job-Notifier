@@ -1,0 +1,44 @@
+package org.oshanh.jobnotifier.controller;
+
+import lombok.AllArgsConstructor;
+import org.oshanh.jobnotifier.dto.PreferenceDTO;
+import org.oshanh.jobnotifier.model.Preference;
+import org.oshanh.jobnotifier.model.Topjobs;
+import org.oshanh.jobnotifier.service.NotificationService;
+import org.oshanh.jobnotifier.service.PrefService;
+import org.oshanh.jobnotifier.service.ScrapeService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Scanner;
+
+@RestController
+@RequestMapping(value = "pref")
+@AllArgsConstructor
+public class PrefController {
+    private final PrefService prefService;
+
+
+    @GetMapping
+    public ResponseEntity<?> findByUid(@RequestParam String email) {
+        PreferenceDTO preferenceDTO = prefService.findByEmail(email);
+        if(preferenceDTO!=null){
+            return new ResponseEntity<>(preferenceDTO, HttpStatus.OK);
+
+        }
+        else{
+            return new ResponseEntity<>("User not found",HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping
+    public PreferenceDTO save(@RequestBody PreferenceDTO pref) {
+        return prefService.save(pref);
+    }
+
+
+
+
+}
