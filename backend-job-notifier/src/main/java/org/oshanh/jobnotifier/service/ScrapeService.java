@@ -84,8 +84,18 @@ public class ScrapeService {
         if(!newJobs.isEmpty()) {
             List<Topjobs> savedNewTopJobs=topjobsRepository.saveAll(newJobs);
             List<Job> savedJobs=JobMapper.topJobsToJob(savedNewTopJobs);
-            prefService.sendEmailForPreference(savedJobs);
-            return newJobs;
+            try{
+
+                return newJobs;
+            }
+            catch(Exception ignored){
+
+            }
+            finally {
+                prefService.sendEmailForPreference(savedJobs);
+            }
+
+
         }
 
         return new ArrayList<>();
@@ -119,6 +129,8 @@ public class ScrapeService {
                 .queryParam("pg", PG_PARAM)
                 .toUriString();
     }
+
+    
 
 
 }
