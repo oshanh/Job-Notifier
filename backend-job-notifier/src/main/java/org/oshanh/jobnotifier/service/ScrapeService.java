@@ -13,8 +13,11 @@ import org.oshanh.jobnotifier.model.WebsiteURL;
 import org.oshanh.jobnotifier.repository.TopjobsRepository;
 import org.oshanh.jobnotifier.repository.WebsiteRepository;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.ConnectException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -123,6 +126,9 @@ public class ScrapeService {
                 .toUriString();
     }
 
+    //airport jobs
+    //@Scheduled(cron = "0 0 0 * * *",zone ="Asia/Colombo")
+    @Scheduled(fixedRate = 60 * 60 * 1000) // 5 minutes in ms
     public List<Job> scrapeAirportJobs() {
         Website website = websiteRepository.findByBaseURL("www.airport.lk");
         List<String> URLs = new ArrayList<>();
@@ -171,11 +177,13 @@ public class ScrapeService {
                         jobs.add(job);
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        }
 
+        }
+        notificationService.sendNewJobPostingsNotification("oshanharshad3@gmail.com",jobs);
+        notificationService.sendNewJobPostingsNotification("oshanedu@gmail.com",jobs);
         return jobs;
     }
 }

@@ -38,7 +38,7 @@ public class NotificationService {
 	public void sendNewJobPostingsNotification(String toEmail, List<Job> newJobs) {
 		validateJobNotificationInput(toEmail, newJobs);
 
-		String subject = "New job postings (" + newJobs.size() + ")";
+		String subject =  newJobs.get(0).getCompanyName()+"-"+newJobs.size()+" New Jobs ";
 		String htmlBody = buildJobPostingsHtml(newJobs);
 
 		try {
