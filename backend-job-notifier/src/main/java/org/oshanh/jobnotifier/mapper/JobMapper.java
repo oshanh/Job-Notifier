@@ -1,25 +1,25 @@
 package org.oshanh.jobnotifier.mapper;
 
-import org.oshanh.jobnotifier.dto.Job;
+import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.model.Topjobs;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JobMapper {
-    public static List<Job> topJobsToJob(List<Topjobs> topjobs) {
-        List<Job> jobs = new ArrayList<>();
+    public static List<JobDTO> topJobsToJob(List<Topjobs> topjobs) {
+        List<JobDTO> jobDTOS = new ArrayList<>();
         for (Topjobs topjob : topjobs) {
-            Job job = new Job();
-            job.setPosition(topjob.getPosition());
-            job.setCompanyName(topjob.getCompanyName());
-            job.setLocation(topjob.getLocation());
-            job.setOpeningDate(topjob.getOpeningDate());
-            job.setClosingDate(topjob.getClosingDate());
-            job.setSource(topjob.getJobUrl());
+            JobDTO jobDTO = new JobDTO();
+            jobDTO.setPosition(topjob.getPosition());
+            jobDTO.setCompanyName(topjob.getCompanyName());
+            jobDTO.setLocation(topjob.getLocation());
+            jobDTO.setOpeningDate(topjob.getOpeningDate());
+            jobDTO.setClosingDate(topjob.getClosingDate());
+            jobDTO.setSource(topjob.getJobUrl());
 
-            jobs.add(job);
+            jobDTOS.add(jobDTO);
         }
-        return jobs;
+        return jobDTOS;
     }
 
 }

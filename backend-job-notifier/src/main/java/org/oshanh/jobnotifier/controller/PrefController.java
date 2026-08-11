@@ -2,17 +2,12 @@ package org.oshanh.jobnotifier.controller;
 
 import lombok.AllArgsConstructor;
 import org.oshanh.jobnotifier.dto.PreferenceDTO;
-import org.oshanh.jobnotifier.model.Preference;
-import org.oshanh.jobnotifier.model.Topjobs;
-import org.oshanh.jobnotifier.service.NotificationService;
 import org.oshanh.jobnotifier.service.PrefService;
 import org.oshanh.jobnotifier.service.ScrapeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Scanner;
 
 @RestController
 @RequestMapping(value = "pref")

@@ -1,12 +1,12 @@
 package org.oshanh.jobnotifier.controller;
 
+import org.oshanh.jobnotifier.dto.UserDTO;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.UserRepository;
 import org.oshanh.jobnotifier.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("user")
@@ -19,8 +19,13 @@ public class UserController {
     }
 
 
-    @PostMapping
-    public void createUser(@RequestBody User user){
-        userService.save(user);
+    @PostMapping("add")
+    public UserDTO createUser(@RequestBody UserDTO user){
+        return userService.save(user);
+    }
+
+    @GetMapping("all")
+    public List<UserDTO> getUsers(){
+        return userService.getUsers();
     }
 }

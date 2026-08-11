@@ -1,7 +1,8 @@
 package org.oshanh.jobnotifier.service;
 
 import lombok.AllArgsConstructor;
-import org.oshanh.jobnotifier.dto.Job;
+import lombok.extern.slf4j.Slf4j;
+import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.dto.PreferenceDTO;
 import org.oshanh.jobnotifier.model.Keyword;
 import org.oshanh.jobnotifier.model.Preference;
@@ -9,12 +10,14 @@ import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.PrefRepository;
 import org.oshanh.jobnotifier.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class PrefService {
@@ -116,59 +119,41 @@ public class PrefService {
         }
     }
 
-    public void sendEmailForPreferencen(List<Job> newJobs) {
-        List<Preference> preferences = prefRepository.findAll();
-        for (Preference pref : preferences) {
-            String email = pref.getUser().getEmail();
-
-            List<String> keywords = new ArrayList<>();
-            for (Keyword keyword : pref.getKeywords()) {
-                keywords.add(keyword.getKeyword());
-                List<Job> matchedJObs = new ArrayList<>();
-                newJobs.forEach(j -> {
-
-                    if (j.getPosition().equals(keyword.getKeyword()))
-                        matchedJObs.add(j);
-                });
-                matchedJObs.forEach(j -> {
-                    System.out.println(j.getPosition());
-                });
-
-                if (!matchedJObs.isEmpty()) {
-                    notificationService.sendNewJobPostingsNotification(email, matchedJObs);
-                } else {
-                    System.out.println("\n\nNo matching jobs found\n\n");
-                }
-
-            }
-
-        }
-    }
-
-    public void sendEmailForPreference(List<Job> newJobs) {
+    @Transactional(readOnly = true)
+    public void sendEmailForPreference(List<JobDTO> newJobDTOS) {
         List<Preference> preferences = prefRepository.findAll();
 
         for (Preference pref : preferences) {
+            // Respect the user's email notification preference
+
+            // skip for development
+            // if (!pref.isEmail_enabled()) {
+            // continue;
+            // }
+
             String email = pref.getUser().getEmail();
 
-            // Use a Set keyed by job id (or the Job itself if equals/hashCode is defined)
-            // to avoid emailing the same job twice if it matches multiple keywords.
-            Set<Job> matchedJobs = new LinkedHashSet<>();
-
+            // Collect all matching jobs across all keywords (de-duplicated)
+            Set<JobDTO> matchedJobDTOS = new LinkedHashSet<>();
             for (Keyword keyword : pref.getKeywords()) {
                 String kw = keyword.getKeyword().trim().toLowerCase();
-
-                newJobs.forEach(j -> {
+                newJobDTOS.forEach(j -> {
                     if (j.getPosition() != null && j.getPosition().toLowerCase().contains(kw)) {
-                        matchedJobs.add(j);
+                        matchedJobDTOS.add(j);
                     }
                 });
             }
 
-            if (!matchedJobs.isEmpty()) {
-                notificationService.sendNewJobPostingsNotification(email, new ArrayList<>(matchedJobs));
+            if (!matchedJobDTOS.isEmpty()) {
+                try {
+                    notificationService.sendNewJobPostingsNotification(email, new ArrayList<>(matchedJobDTOS));
+                } catch (Exception e) {
+                    // Log and continue — one failed send shouldn't block other users
+                    log.error("Error sending job postings notification", e);
+                }
             }
         }
     }
+
 
 }
