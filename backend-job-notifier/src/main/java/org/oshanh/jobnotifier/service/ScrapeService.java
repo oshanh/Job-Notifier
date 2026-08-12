@@ -61,8 +61,8 @@ public class ScrapeService {
     @Value("${fosmis.username}")
     private String username;
 
-    //@Value("${fosmis.pwd}")
-    private String pwd="REMOVED";
+    @Value("${fosmis.pwd}")
+    private String pwd;
 
 
 
