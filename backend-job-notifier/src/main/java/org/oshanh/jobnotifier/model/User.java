@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Entity
 @Data
+@Table(name="users")
 public class User {
 
     @Id
@@ -15,9 +16,17 @@ public class User {
     private String email;
     private String name;
     private String password;
+    private String role;
+    private boolean enabled;
 
     @OneToOne(mappedBy="user", cascade = CascadeType.ALL)
     @JsonIgnore
     private Preference preference;
 
+    public enum ROLE{
+        ADMIN,
+        USER
+    }
 }
+
+

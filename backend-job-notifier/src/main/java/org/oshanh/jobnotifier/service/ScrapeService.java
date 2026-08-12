@@ -61,8 +61,8 @@ public class ScrapeService {
     @Value("${fosmis.username}")
     private String username;
 
-    @Value("${fosmis.pwd}")
-    private String pwd;
+    //@Value("${fosmis.pwd}")
+    private String pwd="REMOVED";
 
 
 
@@ -286,7 +286,7 @@ public class ScrapeService {
         for (FosmisNotice notice : scraped) {
             if (!fosmisNoticeRepository.existsByLink(notice.getLink())) {
                 fosmisNoticeRepository.save(notice);
-                notificationService.sendFOSMISNotice(notice,notifyEmail);
+                //notificationService.sendFOSMISNotice(notice,notifyEmail);
             }
         }
     }
@@ -320,7 +320,7 @@ public class ScrapeService {
                 .header("Accept-Language", "en-US,en;q=0.9");
 
         session.url(BASE + "index.php").get();
-
+        log.info("username = {} ,Password = {}",username,pwd);
         session.url(LOGIN_URL)
                 .data("uname", username)
                 .data("upwd", pwd)
