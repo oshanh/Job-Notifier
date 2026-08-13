@@ -33,6 +33,10 @@ public class PrefService {
         }
         Preference pref = prefRepository.findByUser_Id(user.getId());
 
+        if (pref == null) {
+            return null;
+        }
+
         preferenceDTO.setEmail(pref.getUser().getEmail());
 
         List<String> keywords = new ArrayList<>();
@@ -41,6 +45,12 @@ public class PrefService {
         }
 
         preferenceDTO.setKeyword(keywords);
+        preferenceDTO.setUid(pref.getUser().getId());
+        preferenceDTO.setWhatsapp_num(pref.getWhatsapp_num());
+        preferenceDTO.setTelegram_id(pref.getTelegram_id());
+        preferenceDTO.setWhatsapp_enabled(pref.isWhatsapp_enabled());
+        preferenceDTO.setTelegram_enabled(pref.isTelegram_enabled());
+        preferenceDTO.setEmail_enabled(pref.isEmail_enabled());
 
         return preferenceDTO;
     }
@@ -73,6 +83,12 @@ public class PrefService {
 
         PreferenceDTO savedPreferenceDTO = new PreferenceDTO();
         savedPreferenceDTO.setEmail(savedPref.getUser().getEmail());
+        savedPreferenceDTO.setUid(savedPref.getUser().getId());
+        savedPreferenceDTO.setWhatsapp_num(savedPref.getWhatsapp_num());
+        savedPreferenceDTO.setTelegram_id(savedPref.getTelegram_id());
+        savedPreferenceDTO.setWhatsapp_enabled(savedPref.isWhatsapp_enabled());
+        savedPreferenceDTO.setTelegram_enabled(savedPref.isTelegram_enabled());
+        savedPreferenceDTO.setEmail_enabled(savedPref.isEmail_enabled());
         savedPreferenceDTO.setKeyword(savedPref.getKeywords().stream().map(Keyword::getKeyword).toList());
         return savedPreferenceDTO;
     }
@@ -154,6 +170,5 @@ public class PrefService {
             }
         }
     }
-
 
 }

@@ -17,21 +17,22 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-
     @Override
     public String getUsername() {
         return user.getEmail();
     }
+
     @Override
-    public String getPassword(){
+    public String getPassword() {
         return user.getPassword();
     }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole())
-        );
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
+
     @Override
     public boolean isEnabled() {
         return user.isEnabled();

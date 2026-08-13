@@ -19,31 +19,93 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserDTO save(UserDTO user){
-        User u=new User();
+    public UserDTO save(UserDTO user) {
+        User u = new User();
         u.setEmail(user.getEmail());
         u.setName(user.getName());
-        u.setPassword(user.getPassword());
+        u.setPassword(passwordEncoder.encode(user.getPassword()));
+        u.setRole(User.ROLE.USER);
+        u.setEnabled(true);
 
-        User su=userRepository.save(u);
-        UserDTO savedUser= new UserDTO();
+        User su = userRepository.save(u);
+        UserDTO savedUser = new UserDTO();
         savedUser.setEmail(su.getEmail());
         savedUser.setName(su.getName());
         return savedUser;
 
     }
 
+    public User findByEmailEntity(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User missing in DB context"));
+    }
 
     public List<UserDTO> getUsers() {
-        List<User> users=userRepository.findAll();
-        List<UserDTO> list=new ArrayList<>();
-        for(User user:users){
-            UserDTO userDTO=new UserDTO();
+        List<User> users = userRepository.findAll();
+        List<UserDTO> list = new ArrayList<>();
+        for (User user : users) {
+            UserDTO userDTO = new UserDTO();
             userDTO.setEmail(user.getEmail());
             userDTO.setName(user.getName());
+            userDTO.setRole(user.getRole());
+            userDTO.setEnabled(user.isEnabled());
             list.add(userDTO);
         }
         return list;
+    }
+
+    public UserDTO update(String email, UserDTO userDTO) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setName(userDTO.getName());
+        // Since we identify by email, updating the email might be risky, but we apply
+        // it here if provided.
+        // It might be safer to keep the old email if they don't explicitly change it.
+        if (userDTO.getEmail() != null)
+            user.setEmail(userDTO.getEmail());
+
+        if (userDTO.getRole() != null)
+            user.setRole(userDTO.getRole());
+        user.setEnabled(userDTO.isEnabled());
+
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+        User updated = userRepository.save(user);
+
+        UserDTO responseDTO = new UserDTO();
+        responseDTO.setEmail(updated.getEmail());
+        responseDTO.setName(updated.getName());
+        responseDTO.setRole(updated.getRole());
+        responseDTO.setEnabled(updated.isEnabled());
+        return responseDTO;
+    }
+
+    public void delete(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        userRepository.delete(user);
+    }
+
+    public UserDTO updateProfileDetails(String email, String name, String password) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (name != null && !name.trim().isEmpty()) {
+            user.setName(name);
+        }
+
+        if (password != null && !password.trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(password));
+        }
+
+        User updatedUser = userRepository.save(user);
+
+        UserDTO updatedDTO = new UserDTO();
+        updatedDTO.setEmail(updatedUser.getEmail());
+        updatedDTO.setName(updatedUser.getName());
+        updatedDTO.setRole(updatedUser.getRole());
+        updatedDTO.setEnabled(updatedUser.isEnabled());
+        return updatedDTO;
     }
 }
