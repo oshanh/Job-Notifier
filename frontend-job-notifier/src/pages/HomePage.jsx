@@ -25,6 +25,7 @@ export default function HomePage() {
 
                 <div className="pt-8">
                     <button
+                        type="button"
                         onClick={() => navigate('/login')}
                         className="group relative inline-flex items-center justify-center px-10 py-5 text-xl font-bold text-white transition-all duration-200 bg-emerald-600 font-bold rounded-2xl hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.5)] transform hover:-translate-y-1"
                     >

@@ -15,6 +15,7 @@ export default function AdminDashboard() {
                     <p className="text-emerald-200/60 mt-1">Manage system members, roles, and configure their preferences.</p>
                 </div>
                 <button
+                    type="button"
                     onClick={() => setIsCreating(true)}
                     className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg transition-colors border border-emerald-400/30 flex items-center space-x-2"
                 >
