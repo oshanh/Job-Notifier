@@ -65,8 +65,8 @@ public class ScrapeService {
     @Value("${fosmis.pwd}")
     private String pwd;
 
-
-
+    @Transactional
+    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeTopjobs() {
 
         Website website = websiteRepository.findByBaseURL("https://www.topjobs.lk");
