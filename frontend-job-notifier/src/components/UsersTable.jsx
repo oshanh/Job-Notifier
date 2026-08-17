@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { userApi, adminApi } from '../services/apiClient';
 import UserModal from './UserModal';
 import PreferenceModal from './PreferenceModal';
+import { Loader2, Settings, Edit } from 'lucide-react';
 
 export default function UsersTable() {
     const [users, setUsers] = useState([]);
@@ -29,10 +30,7 @@ export default function UsersTable() {
         return (
             <div className="w-full bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center py-20 mt-8">
                 <span className="flex items-center space-x-3 text-emerald-300">
-                    <svg className="animate-spin h-6 w-6 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="animate-spin h-6 w-6 text-emerald-500" />
                     <span>Loading users matrix...</span>
                 </span>
             </div>
@@ -77,8 +75,14 @@ export default function UsersTable() {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-4">
-                                    <button onClick={() => setViewingPrefEmail(u.email)} className="text-teal-400 hover:text-teal-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none">Prefs</button>
-                                    <button onClick={() => setEditingUser(u)} className="text-emerald-400 hover:text-emerald-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none">Edit</button>
+                                    <button onClick={() => setViewingPrefEmail(u.email)} className="inline-flex items-center text-teal-400 hover:text-teal-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none">
+                                        <Settings className="w-4 h-4 mr-1" />
+                                        Prefs
+                                    </button>
+                                    <button onClick={() => setEditingUser(u)} className="inline-flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none">
+                                        <Edit className="w-4 h-4 mr-1" />
+                                        Edit
+                                    </button>
                                 </td>
                             </tr>
                         ))}

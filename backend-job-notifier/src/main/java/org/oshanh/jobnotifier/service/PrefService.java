@@ -9,6 +9,8 @@ import org.oshanh.jobnotifier.model.Preference;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.PrefRepository;
 import org.oshanh.jobnotifier.repository.UserRepository;
+import org.oshanh.jobnotifier.repository.WebsiteRepository;
+import org.oshanh.jobnotifier.model.Website;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.oshanh.jobnotifier.dto.JobEmailMessage;
 
 @Slf4j
 @Service
@@ -23,7 +26,8 @@ import java.util.Set;
 public class PrefService {
     private final PrefRepository prefRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final WebsiteRepository websiteRepository;
+    private final EmailProducer emailProducer;
 
     public PreferenceDTO findByEmail(String email) {
         PreferenceDTO preferenceDTO = new PreferenceDTO();
@@ -45,6 +49,13 @@ public class PrefService {
         }
 
         preferenceDTO.setKeyword(keywords);
+        List<String> websiteUrls = new ArrayList<>();
+        if (pref.getWebsites() != null) {
+            for (Website w : pref.getWebsites()) {
+                websiteUrls.add(w.getBaseURL());
+            }
+        }
+        preferenceDTO.setWebsites(websiteUrls);
         preferenceDTO.setUid(pref.getUser().getId());
         preferenceDTO.setWhatsapp_num(pref.getWhatsapp_num());
         preferenceDTO.setTelegram_id(pref.getTelegram_id());
@@ -73,6 +84,17 @@ public class PrefService {
 
         pref.setUser(user);
         pref.setKeywords(keywords);
+
+        List<Website> websites = new ArrayList<>();
+        if (preferenceDTO.getWebsites() != null) {
+            for (String url : preferenceDTO.getWebsites()) {
+                Website w = websiteRepository.findByBaseURL(url);
+                if (w != null)
+                    websites.add(w);
+            }
+        }
+        pref.setWebsites(websites);
+
         pref.setWhatsapp_num(preferenceDTO.getWhatsapp_num());
         pref.setTelegram_id(preferenceDTO.getTelegram_id());
         pref.setWhatsapp_enabled(preferenceDTO.isWhatsapp_enabled());
@@ -90,6 +112,7 @@ public class PrefService {
         savedPreferenceDTO.setTelegram_enabled(savedPref.isTelegram_enabled());
         savedPreferenceDTO.setEmail_enabled(savedPref.isEmail_enabled());
         savedPreferenceDTO.setKeyword(savedPref.getKeywords().stream().map(Keyword::getKeyword).toList());
+        savedPreferenceDTO.setWebsites(savedPref.getWebsites().stream().map(Website::getBaseURL).toList());
         return savedPreferenceDTO;
     }
 
@@ -110,6 +133,16 @@ public class PrefService {
             pref.getKeywords().add(keyword);
         }
 
+        List<Website> websites = new ArrayList<>();
+        if (preferenceDTO.getWebsites() != null) {
+            for (String url : preferenceDTO.getWebsites()) {
+                Website w = websiteRepository.findByBaseURL(url);
+                if (w != null)
+                    websites.add(w);
+            }
+        }
+        pref.setWebsites(websites);
+
         pref.setWhatsapp_num(preferenceDTO.getWhatsapp_num());
         pref.setTelegram_id(preferenceDTO.getTelegram_id());
         pref.setWhatsapp_enabled(preferenceDTO.isWhatsapp_enabled());
@@ -121,6 +154,7 @@ public class PrefService {
         PreferenceDTO savedPreferenceDTO = new PreferenceDTO();
         savedPreferenceDTO.setEmail(savedPref.getUser().getEmail());
         savedPreferenceDTO.setKeyword(savedPref.getKeywords().stream().map(Keyword::getKeyword).toList());
+        savedPreferenceDTO.setWebsites(savedPref.getWebsites().stream().map(Website::getBaseURL).toList());
         return savedPreferenceDTO;
     }
 
@@ -142,18 +176,39 @@ public class PrefService {
         for (Preference pref : preferences) {
             // Respect the user's email notification preference
 
-            // skip for development
-            // if (!pref.isEmail_enabled()) {
-            // continue;
-            // }
+             //skip disabled or email not preferred
+             if (!pref.getUser().isEnabled() && !pref.isEmail_enabled() ) {
+             continue;
+             }
 
             String email = pref.getUser().getEmail();
+
+            // Enforce Website Rules
+            if (pref.getWebsites() == null || pref.getWebsites().isEmpty()) {
+                continue; // No websites selected, don't send emails
+            }
+
+            List<JobDTO> domainFilteredJobs = new ArrayList<>();
+            for (JobDTO job : newJobDTOS) {
+                if (job.getSource() == null)
+                    continue;
+                for (Website w : pref.getWebsites()) {
+                    if (job.getSource().contains(w.getBaseURL()) || w.getBaseURL().contains(job.getSource())) {
+                        domainFilteredJobs.add(job);
+                        break;
+                    }
+                }
+            }
+
+            if (domainFilteredJobs.isEmpty()) {
+                continue; // No jobs from their subscribed sites
+            }
 
             // Collect all matching jobs across all keywords (de-duplicated)
             Set<JobDTO> matchedJobDTOS = new LinkedHashSet<>();
             for (Keyword keyword : pref.getKeywords()) {
                 String kw = keyword.getKeyword().trim().toLowerCase();
-                newJobDTOS.forEach(j -> {
+                domainFilteredJobs.forEach(j -> {
                     if (j.getPosition() != null && j.getPosition().toLowerCase().contains(kw)) {
                         matchedJobDTOS.add(j);
                     }
@@ -162,10 +217,10 @@ public class PrefService {
 
             if (!matchedJobDTOS.isEmpty()) {
                 try {
-                    notificationService.sendNewJobPostingsNotification(email, new ArrayList<>(matchedJobDTOS));
+                    emailProducer.sendJobEmail(new JobEmailMessage(email, new ArrayList<>(matchedJobDTOS)));
                 } catch (Exception e) {
                     // Log and continue — one failed send shouldn't block other users
-                    log.error("Error sending job postings notification", e);
+                    log.error("Error queueing job postings notification to RabbitMQ", e);
                 }
             }
         }

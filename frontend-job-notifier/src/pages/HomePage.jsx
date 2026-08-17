@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function HomePage() {
                         className="group relative inline-flex items-center justify-center px-10 py-5 text-xl font-bold text-white transition-all duration-200 bg-emerald-600 font-bold rounded-2xl hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.5)] transform hover:-translate-y-1"
                     >
                         <span>Get Notified Now</span>
-                        <svg className="w-6 h-6 ml-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        <ArrowRight className="w-6 h-6 ml-3 transform group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
 

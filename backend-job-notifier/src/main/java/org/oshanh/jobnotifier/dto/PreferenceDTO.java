@@ -10,7 +10,8 @@ public class PreferenceDTO {
 
     private Long uid;
     private String email;
-    private List<String> keyword=new ArrayList<>();
+    private List<String> keyword = new ArrayList<>();
+    private List<String> websites = new ArrayList<>();
     private String whatsapp_num;
     private String telegram_id;
     private boolean whatsapp_enabled;

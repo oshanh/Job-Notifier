@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { adminApi } from '../services/apiClient';
+import { X, Save, Loader2, Trash2 } from 'lucide-react';
 
 export default function UserModal({ user, onClose, onRefresh }) {
     const [name, setName] = useState(user.name);
@@ -100,8 +101,9 @@ export default function UserModal({ user, onClose, onRefresh }) {
                             <button
                                 type="button"
                                 onClick={handleDelete}
-                                className="text-rose-400 hover:text-rose-300 text-sm font-medium transition-colors"
+                                className="inline-flex items-center text-rose-400 hover:text-rose-300 text-sm font-medium transition-colors"
                             >
+                                <Trash2 className="w-4 h-4 mr-1.5" />
                                 Delete User
                             </button>
 
@@ -109,15 +111,17 @@ export default function UserModal({ user, onClose, onRefresh }) {
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-colors"
+                                    className="inline-flex items-center px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-colors"
                                 >
+                                    <X className="w-4 h-4 mr-1.5" />
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-medium transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-medium transition-colors disabled:opacity-50 shadow-lg border border-emerald-500/30"
                                 >
+                                    {isLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
                                     {isLoading ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>

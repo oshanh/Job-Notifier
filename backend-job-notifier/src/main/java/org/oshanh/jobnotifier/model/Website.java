@@ -23,8 +23,7 @@ public class Website {
     @OneToMany(mappedBy = "website", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WebsiteURL> urls;
 
-    @ManyToOne
-    @JoinColumn(name = "preference_id")
-    private Preference preference;
+    @ManyToMany(mappedBy = "websites")
+    private List<Preference> preferences;
 
 }

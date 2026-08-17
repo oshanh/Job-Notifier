@@ -17,6 +17,10 @@ public class RabbitMQConfig {
     public static final String EXCHANGE = "fosmis-exchange";
     public static final String ROUTING_KEY = "fosmis.email";
 
+    public static final String JOB_QUEUE = "job-email-queue";
+    public static final String JOB_EXCHANGE = "job-exchange";
+    public static final String JOB_ROUTING_KEY = "job.email";
+
     @Bean
     public Queue fosmisEmailQueue() {
         return new Queue(QUEUE, true);
@@ -39,6 +43,27 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue jobEmailQueue() {
+        return new Queue(JOB_QUEUE, true);
+    }
+
+    @Bean
+    public DirectExchange jobExchange() {
+        return new DirectExchange(JOB_EXCHANGE);
+    }
+
+    @Bean
+    public Binding jobBinding(
+            Queue jobEmailQueue,
+            DirectExchange jobExchange) {
+
+        return BindingBuilder
+                .bind(jobEmailQueue)
+                .to(jobExchange)
+                .with(JOB_ROUTING_KEY);
+    }
+
+    @Bean
     public JacksonJsonMessageConverter jacksonJsonMessageConverter() {
         return new JacksonJsonMessageConverter();
     }
@@ -48,8 +73,7 @@ public class RabbitMQConfig {
             ConnectionFactory connectionFactory,
             JacksonJsonMessageConverter converter) {
 
-        RabbitTemplate rabbitTemplate =
-                new RabbitTemplate(connectionFactory);
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
 
         rabbitTemplate.setMessageConverter(converter);
 

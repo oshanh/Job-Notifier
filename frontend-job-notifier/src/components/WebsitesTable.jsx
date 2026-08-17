@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { websiteApi } from '../services/apiClient';
 import WebsiteModal from './WebsiteModal';
+import { Edit, PowerOff, Trash2 } from 'lucide-react';
 
 export default function WebsitesTable({ refreshKey }) {
     const [websites, setWebsites] = useState([]);
@@ -83,24 +84,27 @@ export default function WebsitesTable({ refreshKey }) {
                                 <td className="px-6 py-4 text-right space-x-4">
                                     <button
                                         onClick={() => setEditingWebsite(wb)}
-                                        className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors outline-none"
+                                        className="inline-flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none"
                                     >
+                                        <Edit className="w-4 h-4 mr-1" />
                                         Edit
                                     </button>
                                     {(wb.enabled || wb.isEnabled) && (
                                         <button
                                             onClick={() => handleSoftDelete(wb)}
                                             title="Disable this website to temporarily prevent jobs fetching"
-                                            className="text-amber-400 hover:text-amber-300 font-medium transition-colors outline-none"
+                                            className="inline-flex items-center text-amber-400 hover:text-amber-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none"
                                         >
+                                            <PowerOff className="w-4 h-4 mr-1" />
                                             Disable
                                         </button>
                                     )}
                                     <button
                                         onClick={() => handleHardDelete(wb)}
-                                        className="text-rose-400 hover:text-rose-300 font-medium transition-colors outline-none"
+                                        className="inline-flex items-center text-rose-400 hover:text-rose-300 transition-colors text-xs font-semibold uppercase tracking-wider outline-none"
                                     >
-                                        Delete Full
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Delete
                                     </button>
                                 </td>
                             </tr>

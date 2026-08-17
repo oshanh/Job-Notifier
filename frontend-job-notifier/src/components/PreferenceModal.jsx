@@ -1,34 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { prefApi } from '../services/apiClient';
+import { prefApi, websiteApi } from '../services/apiClient';
+import { Plus, X, Save, Loader2 } from 'lucide-react';
 
 export default function PreferenceModal({ email, onClose }) {
     const [pref, setPref] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [newKeyword, setNewKeyword] = useState("");
+    const [availableWebsites, setAvailableWebsites] = useState([]);
 
     useEffect(() => {
-        const fetchPref = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await prefApi.getByEmail(email);
-                setPref(data);
+                const [prefRes, sitesRes] = await Promise.allSettled([
+                    prefApi.getByEmail(email),
+                    websiteApi.getAll()
+                ]);
+
+                if (sitesRes.status === 'fulfilled') {
+                    setAvailableWebsites(sitesRes.value.data || []);
+                }
+
+                if (prefRes.status === 'fulfilled' && prefRes.value.data) {
+                    setPref({ ...prefRes.value.data, websites: prefRes.value.data.websites || [] });
+                } else {
+                    // Initialize empty
+                    setPref({
+                        email: email,
+                        keyword: [],
+                        websites: [],
+                        whatsapp_num: "",
+                        telegram_id: "",
+                        whatsapp_enabled: false,
+                        telegram_enabled: false,
+                        email_enabled: true
+                    });
+                }
             } catch (err) {
-                // If 404, the preference might not exist yet. Initialize empty.
-                setPref({
-                    email: email,
-                    keyword: [],
-                    whatsapp_num: "",
-                    telegram_id: "",
-                    whatsapp_enabled: false,
-                    telegram_enabled: false,
-                    email_enabled: true
-                });
+                console.error("Failed to load generic preferences");
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchPref();
+        fetchData();
     }, [email]);
 
     const handleSave = async () => {
@@ -57,6 +72,14 @@ export default function PreferenceModal({ email, onClose }) {
 
     const removeKeyword = (kw) => {
         setPref(p => ({ ...p, keyword: p.keyword.filter(k => k !== kw) }));
+    };
+
+    const toggleWebsite = (websiteDomain) => {
+        setPref(p => {
+            const wlist = p.websites || [];
+            if (wlist.includes(websiteDomain)) return { ...p, websites: wlist.filter(w => w !== websiteDomain) };
+            return { ...p, websites: [...wlist, websiteDomain] };
+        });
     };
 
     if (isLoading) {
@@ -114,6 +137,26 @@ export default function PreferenceModal({ email, onClose }) {
                         </div>
                     </div>
 
+                    {/* Website Sources */}
+                    {availableWebsites.length > 0 && (
+                        <div className="pt-3 border-t border-white/10">
+                            <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2">Website Sources</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {availableWebsites.map((site) => (
+                                    <label key={site.website} className="flex items-center space-x-2 text-white text-sm bg-white/5 border border-white/10 rounded-xl px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={(pref.websites || []).includes(site.website)}
+                                            onChange={() => toggleWebsite(site.website)}
+                                            className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-black border-gray-600"
+                                        />
+                                        <span className="truncate" title={site.website}>{(site.website || "").replace(/^https?:\/\//, '')}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Keywords List */}
                     <div className="pt-3 border-t border-white/10">
                         <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2">Job Keywords</h4>
@@ -126,13 +169,13 @@ export default function PreferenceModal({ email, onClose }) {
                                 placeholder="e.g. software engineer, python"
                                 className="flex-1 px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg focus:ring-1 focus:ring-emerald-500 text-white outline-none text-xs"
                             />
-                            <button onClick={addKeyword} className="px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/50 rounded-lg text-emerald-200 hover:text-white transition-colors text-xs">+</button>
+                            <button onClick={addKeyword} className="flex items-center justify-center p-1.5 bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/50 rounded-lg text-emerald-200 hover:text-white transition-colors" title="Add Keyword"><Plus className="w-4 h-4" /></button>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                             {pref.keyword.map((kw, i) => (
                                 <span key={i} className="flex items-center space-x-1 px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-[10px]">
                                     <span>{kw}</span>
-                                    <button onClick={() => removeKeyword(kw)} className="text-emerald-400 hover:text-white ml-2">&times;</button>
+                                    <button onClick={() => removeKeyword(kw)} className="text-emerald-400 hover:text-white ml-1.5"><X className="w-3 h-3 inline" /></button>
                                 </span>
                             ))}
                             {pref.keyword.length === 0 && <p className="text-xs text-gray-500 italic">No keywords added.</p>}
@@ -140,10 +183,14 @@ export default function PreferenceModal({ email, onClose }) {
                     </div>
                 </div>
 
-                <div className="p-3 border-t border-white/10 flex justify-end space-x-2">
-                    <button onClick={onClose} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-colors text-sm">Cancel</button>
-                    <button onClick={handleSave} disabled={isSaving} className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:to-teal-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 text-sm">
-                        {isSaving ? 'Saving...' : 'Save Preferences'}
+                <div className="p-3 border-t border-white/10 flex justify-end space-x-3">
+                    <button onClick={onClose} className="inline-flex items-center px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-colors text-sm">
+                        <X className="w-4 h-4 mr-1.5" />
+                        Cancel
+                    </button>
+                    <button onClick={handleSave} disabled={isSaving} className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-medium transition-colors disabled:opacity-50 text-sm shadow-lg border border-emerald-500/30">
+                        {isSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                        {isSaving ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </div>

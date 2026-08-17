@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.oshanh.jobnotifier.dto.FosmisEmailMessage;
+import org.oshanh.jobnotifier.dto.JobEmailMessage;
 import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.mapper.JobMapper;
 import org.oshanh.jobnotifier.model.*;
@@ -40,8 +41,7 @@ public class ScrapeService {
     private final AirportjobsRepository airportjobsRepository;
     private final PrefService prefService;
     private final FosmisNoticeRepository fosmisNoticeRepository;
-    private final NotificationService notificationService;
-    private final FosmisEmailProducer fosmisEmailProducer;
+    private final EmailProducer emailProducer;
     private final FosmisUserRepository fosmisUserRepository;
 
     // TobJobs job url builder
@@ -162,7 +162,8 @@ public class ScrapeService {
     @Transactional
     @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
-        Website website = websiteRepository.findByBaseURL("www.airport.lk");
+        log.info("scraping AirportJobs");
+        Website website = websiteRepository.findByBaseURL("https://www.airport.lk");
         List<String> URLs = new ArrayList<>();
         if (website != null) {
             URLs = website.getUrls().stream().map(WebsiteURL::getUrl).toList();
@@ -222,9 +223,11 @@ public class ScrapeService {
             }
 
         }
-        // filter new jobs
+        //filter users based on preference
 
-        notificationService.sendNewJobPostingsNotification(notifyEmail, jobDTOS);
+        if (!jobDTOS.isEmpty()) {
+            prefService.sendEmailForPreference(jobDTOS);
+        }
         return jobDTOS;
     }
 
@@ -326,7 +329,7 @@ public class ScrapeService {
                         notice.getPublishedAt(),
                         notice.getLink());
 
-                fosmisEmailProducer.send(message);
+                emailProducer.sendFosmisEmail(message);
             }
         }
 
