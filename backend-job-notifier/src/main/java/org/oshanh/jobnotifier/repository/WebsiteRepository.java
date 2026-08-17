@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface WebsiteRepository extends JpaRepository<Website, Integer> {
     Website findByBaseURL(String website);
+    Website findWebsiteByBaseURLContainsIgnoreCase(String website);
 }

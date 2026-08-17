@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,13 +71,16 @@ public class NotificationService {
 		}
 	}
 
-	public void sendFOSMISNotice(FosmisNotice notice,String notifyEmail) {
+	public void sendFOSMISNotice( String title,
+								  LocalDateTime publishedAt,
+								  String link,
+								  String email) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-			helper.setTo(notifyEmail);
-			helper.setSubject("📢 New FOSMIS Notice: " + notice.getTitle());
+			helper.setTo(email);
+			helper.setSubject("📢 New FOSMIS Notice: " + title);
 
 			String html = """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
@@ -100,7 +104,7 @@ public class NotificationService {
                     Faculty of Science, University of Ruhuna — FOSMIS
                   </div>
                 </div>
-                """.formatted(notice.getTitle(), notice.getPublishedAt(), notice.getLink());
+                """.formatted(title, publishedAt, link);
 
 			helper.setText(html, true); // true = isHtml
 

@@ -39,8 +39,12 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                                .requestMatchers("/auth/**").permitAll()
-                                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                                .requestMatchers(
+                                                        "/auth/**",
+                                                        "/fosmis-notification/**"
+                                                ).permitAll()
+
+                                                .requestMatchers("/admin/**","/test/**","/fosmis/**").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

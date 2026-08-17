@@ -38,6 +38,26 @@ export const prefApi = {
     delete: (email) => apiClient.delete(`/pref?email=${email}`)
 };
 
+export const fosmisApi = {
+    getAllUsers: () => apiClient.get('/fosmis'),
+    getUserByUsername: (username) => apiClient.get(`/fosmis/${username}`),
+    createUser: (data) => apiClient.post('/fosmis', data),
+    updateUser: (username, data) => apiClient.put(`/fosmis/${username}`, data),
+    deleteUser: (username) => apiClient.delete(`/fosmis/${username}`)
+};
+
+export const websiteApi = {
+    getAll: () => apiClient.get('/websites'),
+    create: (data) => apiClient.post('/websites', data),
+    update: (baseURL, data) => apiClient.put(`/websites?url=${encodeURIComponent(baseURL)}`, data),
+    softDelete: (baseURL) => apiClient.patch(`/websites/disable?url=${encodeURIComponent(baseURL)}`),
+    hardDelete: (baseURL) => apiClient.delete(`/websites?url=${encodeURIComponent(baseURL)}`)
+};
+
+export const fosmisPublicApi = {
+    subscribe: (data) => apiClient.post('/fosmis-notification', data)
+};
+
 export function sendTestGmail(data) {
     return apiClient.post(`/test/gmail`, data);
 }

@@ -17,9 +17,8 @@ public class FosmisNotice {
     private String title;
     private LocalDateTime publishedAt;
 
-    @Column(length = 1000)
+    @Column(length = 1000, nullable = false)
     private String link;          // absolute URL — this is our uniqueness key
 
-    private LocalDateTime notifiedAt;
 
 }

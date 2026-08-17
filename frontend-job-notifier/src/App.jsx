@@ -6,6 +6,8 @@ import UserLoginPage from './pages/UserLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
+import FosmisNotificationPage from './pages/FosmisNotificationPage';
+import AdminWebsitesPage from './pages/AdminWebsitesPage';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, identity } = useContext(AuthContext);
@@ -27,6 +29,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<UserLoginPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/fosmis-notification" element={<FosmisNotificationPage />} />
 
           <Route
             path="/profile/*"
@@ -42,6 +45,15 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/websites"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminWebsitesPage />
               </ProtectedRoute>
             }
           />

@@ -7,13 +7,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.oshanh.jobnotifier.dto.FosmisEmailMessage;
 import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.mapper.JobMapper;
 import org.oshanh.jobnotifier.model.*;
-import org.oshanh.jobnotifier.repository.AirportjobsRepository;
-import org.oshanh.jobnotifier.repository.FosmisNoticeRepository;
-import org.oshanh.jobnotifier.repository.TopjobsRepository;
-import org.oshanh.jobnotifier.repository.WebsiteRepository;
+import org.oshanh.jobnotifier.repository.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +23,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalDate;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -42,6 +41,8 @@ public class ScrapeService {
     private final PrefService prefService;
     private final FosmisNoticeRepository fosmisNoticeRepository;
     private final NotificationService notificationService;
+    private final FosmisEmailProducer fosmisEmailProducer;
+    private final FosmisUserRepository fosmisUserRepository;
 
     // TobJobs job url builder
     private static final String BASE_URL = "https://www.topjobs.lk/employer/JobAdvertismentServlet";
@@ -68,7 +69,7 @@ public class ScrapeService {
 
     public List<JobDTO> scrapeTopjobs() {
 
-        Website website = websiteRepository.findByBaseURL("www.topjobs.lk");
+        Website website = websiteRepository.findByBaseURL("https://www.topjobs.lk");
         List<String> URLs = website.getUrls().stream().map(WebsiteURL::getUrl).toList();
 
         List<Topjobs> jobs = new ArrayList<>();
@@ -158,7 +159,8 @@ public class ScrapeService {
 
     // airport jobs
     // @Scheduled(cron = "0 0 0 * * *",zone ="Asia/Colombo")
-    // @Scheduled(fixedRate = 60 * 60 * 1000)
+    @Transactional
+    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         Website website = websiteRepository.findByBaseURL("www.airport.lk");
         List<String> URLs = new ArrayList<>();
@@ -221,8 +223,8 @@ public class ScrapeService {
 
         }
         // filter new jobs
-        log.info(jobDTOS.toString());
-        notificationService.sendNewJobPostingsNotification(notifyEmail,jobDTOS);
+
+        notificationService.sendNewJobPostingsNotification(notifyEmail, jobDTOS);
         return jobDTOS;
     }
 
@@ -274,21 +276,63 @@ public class ScrapeService {
         }
     }
 
-    //@Scheduled(fixedRate = 20, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
+    // @Scheduled(fixedRate = 120,timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);
+
         log.info("Scraped {} Notices", scraped.size());
 
-        // reverse so oldest new notice emails first, in publish order
+        // Oldest new notice emails first
         Collections.reverse(scraped);
 
-        for (FosmisNotice notice : scraped) {
-            if (!fosmisNoticeRepository.existsByLink(notice.getLink())) {
-                fosmisNoticeRepository.save(notice);
-                //notificationService.sendFOSMISNotice(notice,notifyEmail);
+        List<String> links = scraped.stream()
+                .map(FosmisNotice::getLink)
+                .toList();
+
+        if (links.isEmpty()) {
+            return;
+        }
+        Set<String> existingLinks = fosmisNoticeRepository.findExistingLinks(links);
+
+        List<FosmisNotice> newNotices = scraped.stream()
+                .filter(notice -> !existingLinks.contains(notice.getLink()))
+                .toList();
+
+        if (newNotices.isEmpty()) {
+            return;
+        }
+        log.info("Found {} new notices", newNotices.size());
+
+        fosmisNoticeRepository.saveAll(newNotices);
+
+        // Get all FOSMIS users
+        List<String> emails = fosmisUserRepository.findAllEnabledEmails();
+
+        log.info(
+                "Found {} FOSMIS notification users",
+                emails.size());
+
+        // Notice first → Email second
+        for (FosmisNotice notice : newNotices) {
+
+            for (String email : emails) {
+
+                FosmisEmailMessage message = new FosmisEmailMessage(
+                        notice.getId(),
+                        email,
+                        notice.getTitle(),
+                        notice.getPublishedAt(),
+                        notice.getLink());
+
+                fosmisEmailProducer.send(message);
             }
         }
+
+        log.info(
+                "Queued {} email notifications",
+                newNotices.size() * emails.size());
     }
 
     public Document fetchNoticesPageWithCachedSession() throws IOException {
@@ -320,7 +364,7 @@ public class ScrapeService {
                 .header("Accept-Language", "en-US,en;q=0.9");
 
         session.url(BASE + "index.php").get();
-        log.info("username = {} ,Password = {}",username,pwd);
+
         session.url(LOGIN_URL)
                 .data("uname", username)
                 .data("upwd", pwd)

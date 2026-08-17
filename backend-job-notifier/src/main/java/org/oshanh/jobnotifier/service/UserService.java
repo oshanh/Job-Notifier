@@ -22,6 +22,10 @@ public class UserService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public UserDTO save(UserDTO user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("User with this email already exists");
+        }
+
         User u = new User();
         u.setEmail(user.getEmail());
         u.setName(user.getName());
@@ -38,7 +42,8 @@ public class UserService {
     }
 
     public User findByEmailEntity(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User missing in DB context"));
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User missing in DB context"));
     }
 
     public List<UserDTO> getUsers() {
@@ -57,13 +62,17 @@ public class UserService {
 
     public UserDTO update(String email, UserDTO userDTO) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setName(userDTO.getName());
         // Since we identify by email, updating the email might be risky, but we apply
         // it here if provided.
         // It might be safer to keep the old email if they don't explicitly change it.
-        if (userDTO.getEmail() != null)
+        if (userDTO.getEmail() != null) {
+            if (!userDTO.getEmail().equals(email) && userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
+                throw new IllegalArgumentException("User with this email already exists");
+            }
             user.setEmail(userDTO.getEmail());
+        }
 
         if (userDTO.getRole() != null)
             user.setRole(userDTO.getRole());
@@ -84,12 +93,12 @@ public class UserService {
 
     public void delete(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         userRepository.delete(user);
     }
 
     public UserDTO updateProfileDetails(String email, String name, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (name != null && !name.trim().isEmpty()) {
             user.setName(name);

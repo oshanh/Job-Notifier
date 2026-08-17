@@ -21,6 +21,9 @@ public class Preference {
     @OneToMany(mappedBy = "preference", cascade = CascadeType.ALL,orphanRemoval=true)
     private List<Keyword> keywords=new ArrayList<>();
 
+    @OneToMany(mappedBy = "preference", cascade = CascadeType.ALL,orphanRemoval=true)
+    private List<Website>  websites=new ArrayList<>();
+
     private String whatsapp_num;
     private String telegram_id;
 
