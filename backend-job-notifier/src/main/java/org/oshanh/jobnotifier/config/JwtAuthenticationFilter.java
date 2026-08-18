@@ -43,26 +43,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        userEmail = jwtUtil.extractUsername(jwt);
+        try {
+            userEmail = jwtUtil.extractUsername(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                String role = jwtUtil.extractRoles(jwt);
-                List<GrantedAuthority> authorities = new ArrayList<>();
-                if (role != null && !role.isEmpty()) {
-                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+                    String role = jwtUtil.extractRoles(jwt);
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    if (role != null && !role.isEmpty()) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    }
+
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities.isEmpty() ? userDetails.getAuthorities() : authorities);
+
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
-
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        authorities.isEmpty() ? userDetails.getAuthorities() : authorities);
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"JWT token has expired\"}");
+            return;
+        } catch (io.jsonwebtoken.JwtException ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid JWT token\"}");
+            return;
         }
         filterChain.doFilter(request, response);
     }

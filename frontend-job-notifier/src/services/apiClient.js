@@ -14,6 +14,26 @@ apiClient.interceptors.request.use(config => {
     return config;
 });
 
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('email');
+
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/admin/login') {
+                if (window.location.pathname.startsWith('/admin')) {
+                    window.location.href = '/admin/login';
+                } else {
+                    window.location.href = '/login';
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const authApi = {
     login: (data) => apiClient.post('/auth/login', data),
     register: (data) => apiClient.post('/auth/register', data)

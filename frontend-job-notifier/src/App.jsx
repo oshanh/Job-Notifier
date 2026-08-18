@@ -8,6 +8,8 @@ import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import FosmisNotificationPage from './pages/FosmisNotificationPage';
 import AdminWebsitesPage from './pages/AdminWebsitesPage';
+import NotFoundPage from './pages/NotFoundPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, identity } = useContext(AuthContext);
@@ -15,7 +17,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (requiredRole && identity && !identity.roles?.includes(requiredRole)) {
     // If they are an active USER but not an ADMIN and try to access /admin
-    return <Navigate to="/profile" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;
@@ -57,6 +59,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
