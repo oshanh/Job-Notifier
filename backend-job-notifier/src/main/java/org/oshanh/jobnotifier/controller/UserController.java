@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.http.ResponseEntity;
 import java.util.Map;
 
 @RestController
@@ -79,19 +80,24 @@ public class UserController {
     }
 
     @PostMapping("/request-email-change")
-    public String requestEmailChange(@RequestBody Map<String, String> payload) {
-        String newEmail = payload.get("newEmail");
-        if (newEmail == null || newEmail.trim().isEmpty()) {
-            throw new IllegalArgumentException("New email is required");
-        }
+    public ResponseEntity<?> requestEmailChange(@RequestBody Map<String, String> payload) {
+        try {
+            String newEmail = payload.get("newEmail");
+            if (newEmail == null || newEmail.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "New email is required"));
+            }
 
-        if (userService.emailExists(newEmail.trim())) {
-            throw new IllegalArgumentException("User with this email already exists");
-        }
+            if (userService.emailExists(newEmail.trim())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "User with this email already exists"));
+            }
 
-        // Dispatch OTP to the intended new email address to verify ownership
-        otpService.generateAndSendOtp(newEmail.trim());
-        return "{\"message\": \"OTP sent to new email address\"}";
+            // Dispatch OTP to the intended new email address to verify ownership
+            otpService.generateAndSendOtp(newEmail.trim());
+            return ResponseEntity.ok(Map.of("message", "OTP sent to new email address"));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "Email service is temporarily unavailable. Please try again."));
+        }
     }
 
     @PostMapping("/verify-email-change")

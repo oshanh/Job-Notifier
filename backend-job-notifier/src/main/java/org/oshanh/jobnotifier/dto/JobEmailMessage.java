@@ -12,5 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 public class JobEmailMessage implements Serializable {
     private String email;
+    private String website;
     private List<JobDTO> jobs;
 }

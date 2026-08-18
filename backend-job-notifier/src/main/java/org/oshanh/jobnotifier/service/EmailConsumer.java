@@ -35,7 +35,7 @@ public class EmailConsumer {
     public void consumeJob(JobEmailMessage message) {
         try {
             log.info("Sending job email notification to {}", message.getEmail());
-            notificationService.sendNewJobPostingsNotification(message.getEmail(), message.getJobs());
+            notificationService.sendNewJobPostingsNotification(message.getWebsite(),message.getEmail(), message.getJobs());
             log.info("Job email successfully dispatched to {}", message.getEmail());
         } catch (Exception e) {
             log.error("Failed to neatly send job email via RabbitMQ to {}", message.getEmail(), e);

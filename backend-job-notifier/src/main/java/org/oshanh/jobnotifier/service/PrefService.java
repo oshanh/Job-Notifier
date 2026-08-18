@@ -14,6 +14,7 @@ import org.oshanh.jobnotifier.model.Website;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -170,45 +171,35 @@ public class PrefService {
     }
 
     @Transactional(readOnly = true)
-    public void sendEmailForPreference(List<JobDTO> newJobDTOS) {
-        List<Preference> preferences = prefRepository.findAll();
+    public void sendEmailForPreference(List<JobDTO> newJobDTOS, Website sourceWebsite) {
+        if (sourceWebsite == null) {
+            log.warn("Cannot broadcast jobs without a defined source Website block.");
+            return;
+        }
+
+        List<Preference> preferences = prefRepository.findPreferencesBySubscribedWebsite(sourceWebsite.getId());
+
+        URI uri = URI.create(sourceWebsite.getBaseURL());
+        String website = uri.getHost();
+
+        if (website != null && website.startsWith("www.")) {
+            website = website.substring(4).toUpperCase();
+        }
 
         for (Preference pref : preferences) {
             // Respect the user's email notification preference
-
-             //skip disabled or email not preferred
-             if (!pref.getUser().isEnabled() && !pref.isEmail_enabled() ) {
-             continue;
-             }
+            // skip disabled or email not preferred
+            if (!pref.getUser().isEnabled() || !pref.isEmail_enabled()) {
+                continue;
+            }
 
             String email = pref.getUser().getEmail();
-
-            // Enforce Website Rules
-            if (pref.getWebsites() == null || pref.getWebsites().isEmpty()) {
-                continue; // No websites selected, don't send emails
-            }
-
-            List<JobDTO> domainFilteredJobs = new ArrayList<>();
-            for (JobDTO job : newJobDTOS) {
-                if (job.getSource() == null)
-                    continue;
-                for (Website w : pref.getWebsites()) {
-                    if (job.getSource().contains(w.getBaseURL()) || w.getBaseURL().contains(job.getSource())) {
-                        domainFilteredJobs.add(job);
-                        break;
-                    }
-                }
-            }
-
-            if (domainFilteredJobs.isEmpty()) {
-                continue; // No jobs from their subscribed sites
-            }
 
             // Collect all matching jobs across all keywords (de-duplicated)
             Set<JobDTO> matchedJobDTOS = new LinkedHashSet<>();
             for (Keyword keyword : pref.getKeywords()) {
                 String kw = keyword.getKeyword().trim().toLowerCase();
-                domainFilteredJobs.forEach(j -> {
+                newJobDTOS.forEach(j -> {
                     if (j.getPosition() != null && j.getPosition().toLowerCase().contains(kw)) {
                         matchedJobDTOS.add(j);
                     }
@@ -217,7 +208,7 @@ public class PrefService {
 
             if (!matchedJobDTOS.isEmpty()) {
                 try {
-                    emailProducer.sendJobEmail(new JobEmailMessage(email, new ArrayList<>(matchedJobDTOS)));
+                    emailProducer.sendJobEmail(new JobEmailMessage(email, website, new ArrayList<>(matchedJobDTOS)));
                 } catch (Exception e) {
                     // Log and continue — one failed send shouldn't block other users
                     log.error("Error queueing job postings notification to RabbitMQ", e);

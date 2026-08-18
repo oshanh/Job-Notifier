@@ -68,6 +68,7 @@ public class ScrapeService {
     @Transactional
     @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeTopjobs() {
+        log.debug("scraping Topjobs");
 
         Website website = websiteRepository.findByBaseURL("https://www.topjobs.lk");
         List<String> URLs = website.getUrls().stream().map(WebsiteURL::getUrl).toList();
@@ -124,7 +125,7 @@ public class ScrapeService {
             } catch (Exception ignored) {
 
             } finally {
-                prefService.sendEmailForPreference(savedJobDTOS);
+                prefService.sendEmailForPreference(savedJobDTOS, website);
             }
 
         }
@@ -223,10 +224,10 @@ public class ScrapeService {
             }
 
         }
-        //filter users based on preference
+        // filter users based on preference
 
         if (!jobDTOS.isEmpty()) {
-            prefService.sendEmailForPreference(jobDTOS);
+            prefService.sendEmailForPreference(jobDTOS, website);
         }
         return jobDTOS;
     }

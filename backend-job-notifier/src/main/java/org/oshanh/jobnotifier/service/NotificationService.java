@@ -191,7 +191,7 @@ public class NotificationService {
 				.formatted(title, body);
 	}
 
-	public void sendNewJobPostingsNotification(String toEmail, List<JobDTO> newJobDTOS) {
+	public void sendNewJobPostingsNotification(String website,String toEmail, List<JobDTO> newJobDTOS) {
 		validateJobNotificationInput(toEmail, newJobDTOS);
 
 		long distinctCompanies = newJobDTOS.stream()
@@ -200,8 +200,8 @@ public class NotificationService {
 				.distinct()
 				.count();
 		String subject = distinctCompanies == 1
-				? newJobDTOS.get(0).getCompanyName()
-				: newJobDTOS.size() + " New Job Opportunities";
+				?website+" - "+ newJobDTOS.get(0).getCompanyName()
+				:website+" - "+ newJobDTOS.size() + " New Jobs";
 		String htmlBody = buildJobPostingsHtml(newJobDTOS);
 
 		try {
