@@ -28,4 +28,12 @@ public class GlobalExceptionHandler {
         body.put("error", "Not Found");
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("error", "Unauthorized");
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
 }

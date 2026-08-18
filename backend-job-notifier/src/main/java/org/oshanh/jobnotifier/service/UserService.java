@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.dto.UserDTO;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -97,18 +99,30 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public UserDTO updateProfileDetails(String email, String name, String password) {
+    public UserDTO updateProfileDetails(String email, UserDTO dto) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (name != null && !name.trim().isEmpty()) {
-            user.setName(name);
+        if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
+            user.setName(dto.getName());
         }
 
-        if (password != null && !password.trim().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(password));
+        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty() && !dto.getEmail().equals(email)) {
+            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+                throw new IllegalArgumentException("User with this email already exists");
+            }
+            user.setEmail(dto.getEmail());
+            log.info("email from dto =  {}", dto.getEmail());
+        }
+
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Invalid old password");
+            }
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
         User updatedUser = userRepository.save(user);
+        log.info("Updated profile details for user with email {}", updatedUser.getEmail());
 
         UserDTO updatedDTO = new UserDTO();
         updatedDTO.setEmail(updatedUser.getEmail());

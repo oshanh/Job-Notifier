@@ -52,8 +52,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
     };
 
+    const updateToken = (newToken) => {
+        setToken(newToken);
+        setIdentity(parseJwt(newToken));
+        localStorage.setItem('token', newToken);
+    };
+
     return (
-        <AuthContext.Provider value={{ token, isAuthenticated, identity, login, logout }}>
+        <AuthContext.Provider value={{ token, isAuthenticated, identity, login, logout, updateToken }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { X, Users, Globe, LogOut, Menu } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -39,14 +39,14 @@ export default function AdminLayout({ children }) {
                     </div>
 
                     <nav className="mt-10 space-y-2">
-                        <a href="/admin/dashboard" className="flex items-center space-x-3 bg-white/10 border border-white/5 rounded-xl p-3 text-sm font-medium hover:bg-white/20 transition-colors shadow-inner text-emerald-100">
+                        <Link to="/admin/dashboard" onClick={() => setIsSidebarOpen(false)} className="flex items-center space-x-3 bg-white/10 border border-white/5 rounded-xl p-3 text-sm font-medium hover:bg-white/20 transition-colors shadow-inner text-emerald-100">
                             <Users className="w-5 h-5 opacity-70" />
                             <span>Users Management</span>
-                        </a>
-                        <a href="/admin/websites" className="flex items-center space-x-3 bg-white/10 border border-white/5 rounded-xl p-3 text-sm font-medium hover:bg-white/20 transition-colors shadow-inner text-emerald-100">
+                        </Link>
+                        <Link to="/admin/websites" onClick={() => setIsSidebarOpen(false)} className="flex items-center space-x-3 bg-white/10 border border-white/5 rounded-xl p-3 text-sm font-medium hover:bg-white/20 transition-colors shadow-inner text-emerald-100">
                             <Globe className="w-5 h-5 opacity-70" />
                             <span>Websites Management</span>
-                        </a>
+                        </Link>
                     </nav>
                 </div>
 

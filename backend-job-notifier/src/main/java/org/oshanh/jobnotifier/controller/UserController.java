@@ -5,6 +5,7 @@ import org.oshanh.jobnotifier.config.CustomUserDetails;
 import org.oshanh.jobnotifier.dto.UserDTO;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.service.UserService;
+import org.oshanh.jobnotifier.util.JwtUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
     @GetMapping("/me")
     public UserDTO getMyProfile() {
@@ -60,7 +62,16 @@ public class UserController {
         // the main update, but we guarantee it operates on the user's authentic email.
 
         // Ensure the email they are updating belongs to the session!
-        return userService.updateProfileDetails(currentEmail, userDTO.getName(), userDTO.getPassword());
+        UserDTO updated = userService.updateProfileDetails(currentEmail, userDTO);
+
+        // If the email was successfully changed, their old token is dead. Wire a new
+        // one!
+        if (updated.getEmail() != null && !updated.getEmail().equals(currentEmail)) {
+            String newToken = jwtUtil.generateToken(updated.getEmail(), "ROLE_" + updated.getRole().name());
+            updated.setToken(newToken);
+        }
+
+        return updated;
     }
 
 }

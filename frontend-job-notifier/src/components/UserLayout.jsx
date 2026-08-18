@@ -1,11 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { X, User, LogOut, Menu } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { X, LogOut, Menu, Sliders, Settings } from 'lucide-react';
 
 export default function UserLayout({ children }) {
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleLogout = () => {
@@ -39,10 +40,14 @@ export default function UserLayout({ children }) {
                     </div>
 
                     <nav className="mt-10 space-y-2">
-                        <a href="/profile" className="flex items-center space-x-3 bg-white/10 border border-white/5 rounded-xl p-3 text-sm font-medium hover:bg-white/20 transition-colors shadow-inner text-emerald-100">
-                            <User className="w-5 h-5 opacity-70" />
-                            <span>My Profile</span>
-                        </a>
+                        <Link to="/profile/preferences" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 border rounded-xl p-3 text-sm font-medium transition-colors shadow-inner ${location.pathname.includes('/profile/preferences') ? 'bg-white/20 border-white/20 text-white' : 'bg-white/5 border-white/5 text-emerald-100 hover:bg-white/10'}`}>
+                            <Sliders className="w-5 h-5 opacity-70" />
+                            <span>Preferences</span>
+                        </Link>
+                        <Link to="/profile/settings" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 border rounded-xl p-3 text-sm font-medium transition-colors shadow-inner ${location.pathname.includes('/profile/settings') ? 'bg-white/20 border-white/20 text-white' : 'bg-white/5 border-white/5 text-emerald-100 hover:bg-white/10'}`}>
+                            <Settings className="w-5 h-5 opacity-70" />
+                            <span>Account Settings</span>
+                        </Link>
                     </nav>
                 </div>
 
