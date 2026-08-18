@@ -37,7 +37,9 @@ apiClient.interceptors.response.use(
 export const authApi = {
     login: (data) => apiClient.post('/auth/login', data),
     register: (data) => apiClient.post('/auth/register', data),
-    verifyRegistration: (data) => apiClient.post('/auth/verify-registration', data)
+    verifyRegistration: (data) => apiClient.post('/auth/verify-registration', data),
+    forgotPassword: (data) => apiClient.post('/auth/forgot-password', data),
+    resetPassword: (data) => apiClient.post('/auth/reset-password', data)
 };
 export const adminApi = {
     getAllUsers: () => apiClient.get('/admin/users/all'),

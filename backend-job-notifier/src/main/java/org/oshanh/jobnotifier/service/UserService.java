@@ -141,4 +141,13 @@ public class UserService {
         user.setEnabled(true);
         userRepository.save(user);
     }
+
+    public void resetPassword(String email, String newPassword) {
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new IllegalArgumentException("New password cannot be empty");
+        }
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

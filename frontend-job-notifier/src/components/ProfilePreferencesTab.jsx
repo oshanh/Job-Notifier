@@ -117,14 +117,14 @@ export default function ProfilePreferencesTab({ email }) {
                     <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
                         <label className="flex items-center space-x-3 text-white text-sm cursor-pointer w-full">
                             <input type="checkbox" checked={pref.email_enabled} onChange={e => setPref({ ...pref, email_enabled: e.target.checked })} className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-black border-gray-600" />
-                            <span>Email Delivery Pipeline</span>
+                            <span>Email Delivery </span>
                         </label>
                     </div>
 
                     <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
                         <label className="flex items-center space-x-3 text-white mb-2 text-sm cursor-pointer w-full">
                             <input type="checkbox" checked={pref.whatsapp_enabled} onChange={e => setPref({ ...pref, whatsapp_enabled: e.target.checked })} className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-black border-gray-600" />
-                            <span>WhatsApp Bridge</span>
+                            <span>WhatsApp </span>
                         </label>
                         {pref.whatsapp_enabled && (
                             <div className="ml-7 mt-2">
@@ -136,7 +136,7 @@ export default function ProfilePreferencesTab({ email }) {
                     <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
                         <label className="flex items-center space-x-3 text-white mb-2 text-sm cursor-pointer w-full">
                             <input type="checkbox" checked={pref.telegram_enabled} onChange={e => setPref({ ...pref, telegram_enabled: e.target.checked })} className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-black border-gray-600" />
-                            <span>Telegram Bot</span>
+                            <span>Telegram</span>
                         </label>
                         {pref.telegram_enabled && (
                             <div className="ml-7 mt-2">

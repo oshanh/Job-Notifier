@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -74,6 +76,48 @@ public class AuthController {
         String token = jwtUtil.generateToken(user.getEmail(), roles);
 
         return new AuthResponse(token);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+        }
+
+        if (!userService.emailExists(email.trim())) {
+            // Standard security practice: Don't explicitly reveal if email exists, but we
+            // want a good UX.
+            return ResponseEntity.badRequest().body(Map.of("message", "Account with this email does not exist"));
+        }
+
+        try {
+            otpService.generateAndSendOtp(email.trim());
+            return ResponseEntity.ok(Map.of("message", "OTP dispatched to your email"));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "Failed to dispatch email. Please try again."));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        String otp = payload.get("otp");
+        String newPassword = payload.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing required parameters"));
+        }
+
+        boolean isVerified = otpService.validateOtp(email.trim(), otp.trim());
+        if (!isVerified) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired OTP"));
+        }
+
+        userService.resetPassword(email.trim(), newPassword);
+
+        return ResponseEntity.ok(Map.of("message", "Password resetting successfully completed"));
     }
 
     @NotNull
