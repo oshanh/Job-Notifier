@@ -36,7 +36,8 @@ apiClient.interceptors.response.use(
 
 export const authApi = {
     login: (data) => apiClient.post('/auth/login', data),
-    register: (data) => apiClient.post('/auth/register', data)
+    register: (data) => apiClient.post('/auth/register', data),
+    verifyRegistration: (data) => apiClient.post('/auth/verify-registration', data)
 };
 export const adminApi = {
     getAllUsers: () => apiClient.get('/admin/users/all'),
@@ -48,7 +49,9 @@ export const adminApi = {
 export const userApi = {
     getProfile: () => apiClient.get('/user/me'),
     updateProfile: (data) => apiClient.put('/user/me', data),
-    register: (data) => apiClient.post('/auth/register', data)
+    register: (data) => apiClient.post('/auth/register', data), // Used generically sometimes
+    requestEmailChange: (data) => apiClient.post('/user/request-email-change', data),
+    verifyEmailChange: (data) => apiClient.post('/user/verify-email-change', data)
 };
 
 export const prefApi = {

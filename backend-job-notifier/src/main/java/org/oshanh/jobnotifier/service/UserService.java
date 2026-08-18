@@ -33,7 +33,7 @@ public class UserService {
         u.setName(user.getName());
         u.setPassword(passwordEncoder.encode(user.getPassword()));
         u.setRole(User.ROLE.USER);
-        u.setEnabled(true);
+        u.setEnabled(false); // Changed to false: requires OTP verification
 
         User su = userRepository.save(u);
         UserDTO savedUser = new UserDTO();
@@ -46,6 +46,10 @@ public class UserService {
     public User findByEmailEntity(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User missing in DB context"));
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.findByEmail(email).isPresent();
     }
 
     public List<UserDTO> getUsers() {
@@ -130,5 +134,11 @@ public class UserService {
         updatedDTO.setRole(updatedUser.getRole());
         updatedDTO.setEnabled(updatedUser.isEnabled());
         return updatedDTO;
+    }
+
+    public void activateUser(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setEnabled(true);
+        userRepository.save(user);
     }
 }

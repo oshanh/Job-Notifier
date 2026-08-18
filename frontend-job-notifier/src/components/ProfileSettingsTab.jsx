@@ -19,6 +19,8 @@ export default function ProfileSettingsTab({ email: initialEmail }) {
     // Editing flags
     const [isEditingEmail, setIsEditingEmail] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
+    const [isOtpMode, setIsOtpMode] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
 
     // Loading states
     const [isEmailLoading, setIsEmailLoading] = useState(false);
@@ -53,14 +55,31 @@ export default function ProfileSettingsTab({ email: initialEmail }) {
         setIsEmailLoading(true);
         setStatusMessage(null);
         try {
-            const res = await userApi.updateProfile({ email });
+            await userApi.requestEmailChange({ newEmail: email });
+            setIsOtpMode(true);
+            showMessage('success', 'OTP sent to your new email. Please verify to continue.');
+        } catch (err) {
+            showMessage('error', 'Failed to request email change. It may be taken.');
+        } finally {
+            setIsEmailLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setIsEmailLoading(true);
+        setStatusMessage(null);
+        try {
+            const res = await userApi.verifyEmailChange({ newEmail: email, otp: otpCode });
             if (res.data && res.data.token) {
                 updateToken(res.data.token);
             }
+            setIsOtpMode(false);
             setIsEditingEmail(false);
-            showMessage('success', 'Email updated successfully. Session token synchronized.');
+            setOtpCode('');
+            showMessage('success', 'Email successfully verified and updated!');
         } catch (err) {
-            showMessage('error', 'Failed to update email.');
+            showMessage('error', 'Invalid or expired OTP. Please try again.');
         } finally {
             setIsEmailLoading(false);
         }
@@ -146,19 +165,40 @@ export default function ProfileSettingsTab({ email: initialEmail }) {
                             )}
                         </div>
                         {isEditingEmail ? (
-                            <form onSubmit={handleSaveEmail} className="flex space-x-3">
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    className="flex-1 px-4 py-2.5 bg-black/40 border border-emerald-500/50 rounded-xl focus:ring-2 focus:ring-emerald-500 text-white outline-none shadow-inner transition-all text-sm"
-                                />
-                                <button type="button" onClick={() => setIsEditingEmail(false)} className="px-3 text-gray-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
-                                <button type="submit" disabled={isEmailLoading} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 inline-flex items-center text-sm shadow-lg border border-emerald-500/30">
-                                    {isEmailLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />} Save
-                                </button>
-                            </form>
+                            isOtpMode ? (
+                                <form onSubmit={handleVerifyOtp} className="flex flex-col space-y-3">
+                                    <p className="text-xs text-emerald-300">Enter the 6-digit verification code sent to {email}</p>
+                                    <div className="flex space-x-3">
+                                        <input
+                                            type="text"
+                                            required
+                                            maxLength="6"
+                                            placeholder="XXXXXX"
+                                            value={otpCode}
+                                            onChange={e => setOtpCode(e.target.value)}
+                                            className="w-32 px-4 py-2.5 bg-black/40 border border-emerald-500/50 rounded-xl focus:ring-2 focus:ring-emerald-500 text-white outline-none shadow-inner transition-all text-sm tracking-widest text-center"
+                                        />
+                                        <button type="button" onClick={() => { setIsOtpMode(false); setIsEditingEmail(false); setOtpCode(''); }} className="px-3 text-gray-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+                                        <button type="submit" disabled={isEmailLoading} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 inline-flex items-center text-sm shadow-lg border border-emerald-500/30">
+                                            {isEmailLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Verify OTP
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <form onSubmit={handleSaveEmail} className="flex space-x-3">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        className="flex-1 px-4 py-2.5 bg-black/40 border border-emerald-500/50 rounded-xl focus:ring-2 focus:ring-emerald-500 text-white outline-none shadow-inner transition-all text-sm"
+                                    />
+                                    <button type="button" onClick={() => setIsEditingEmail(false)} className="px-3 text-gray-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+                                    <button type="submit" disabled={isEmailLoading} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 inline-flex items-center text-sm shadow-lg border border-emerald-500/30">
+                                        {isEmailLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Send OTP
+                                    </button>
+                                </form>
+                            )
                         ) : (
                             <div className="px-4 py-3 bg-black/20 border border-white/5 rounded-xl text-gray-400 font-mono text-sm shadow-inner">
                                 {email}

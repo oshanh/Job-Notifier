@@ -1,16 +1,24 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../components/AuthContext';
-import { userApi } from '../services/apiClient';
+import { userApi, authApi } from '../services/apiClient';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function UserLoginPage() {
-    const { login } = useContext(AuthContext);
+    const { login, updateToken } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [isRegistering, setIsRegistering] = useState(false);
+    const [isOtpMode, setIsOtpMode] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -22,14 +30,18 @@ export default function UserLoginPage() {
 
         try {
             if (isRegistering) {
-                // Register Flow
-                await userApi.register({ name, email, password });
-                // We auto-login immediately after register
-                const loginResult = await login(email, password);
-                if (loginResult.success) {
-                    navigate('/profile');
+                if (password !== confirmPassword) {
+                    setError("Passwords do not match");
+                    return;
+                }
+
+                // Register Flow - dispatches OTP
+                const res = await userApi.register({ name, email, password });
+                if (res.data?.message === "OTP_SENT" || res.data?.token === "OTP_SENT") {
+                    setIsOtpMode(true);
+                    setError(null);
                 } else {
-                    setError("Registered successfully, but failed to auto-Login.");
+                    setIsOtpMode(true);
                 }
             } else {
                 // Login Flow
@@ -48,6 +60,24 @@ export default function UserLoginPage() {
         }
     };
 
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await authApi.verifyRegistration({ email, password: otpCode });
+            if (res.data && res.data.token) {
+                updateToken(res.data.token);
+                navigate('/profile');
+            }
+        } catch (err) {
+            console.error("OTP verification failed", err);
+            setError(err.response?.data?.message || err.response?.data || "Invalid or expired OTP");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 via-slate-900 to-black p-4 relative overflow-hidden">
             <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-teal-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
@@ -55,10 +85,12 @@ export default function UserLoginPage() {
             <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl relative z-10">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                        {isRegistering ? 'Create Account' : 'Welcome Back'}
+                        {isOtpMode ? 'Check Your Inbox' : (isRegistering ? 'Create Account' : 'Welcome Back')}
                     </h2>
                     <p className="text-sm text-emerald-200 mt-2">
-                        {isRegistering ? 'Sign up for instant automated career alerts' : 'Sign in to monitor your active job signals'}
+                        {isOtpMode
+                            ? `We sent a 6-digit code to ${email}`
+                            : (isRegistering ? 'Sign up for instant automated career alerts' : 'Sign in to monitor your active job signals')}
                     </p>
                 </div>
 
@@ -68,73 +100,141 @@ export default function UserLoginPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {isRegistering && (
+                {isOtpMode ? (
+                    <form onSubmit={handleVerifyOtp} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-200 mb-2">Display Name</label>
+                            <label className="block text-sm font-medium text-emerald-400 mb-4 text-center">Enter Verification Code</label>
                             <input
                                 type="text"
                                 required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
-                                placeholder="Your Name"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value)}
+                                className="w-full px-4 py-4 bg-black/40 border border-emerald-500/50 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-white placeholder-emerald-900/50 transition-all outline-none text-center text-2xl tracking-[0.5em] font-mono shadow-inner"
+                                placeholder="------"
                             />
                         </div>
-                    )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-200 mb-2">Email Address</label>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
-                            placeholder="you@domain.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-200 mb-2">Password</label>
-                        <input
-                            type="password"
-                            required
-                            minLength={6}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full py-3 px-4 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transform transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? 'Processing...' : isRegistering ? 'Sign Up' : 'Sign In'}
-                    </button>
-
-                    <div className="text-center mt-6 text-sm">
-                        <span className="text-gray-400">
-                            {isRegistering ? 'Already have an account?' : 'Need to join?'}
-                        </span>
                         <button
-                            type="button"
-                            onClick={() => setIsRegistering(!isRegistering)}
-                            className="ml-2 font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 px-4 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(5,150,105,0.4)] transform transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isRegistering ? 'Sign In' : 'Register'}
+                            {isLoading ? 'Verifying...' : 'Complete Registration'}
                         </button>
-                    </div>
 
-                    <div className="text-center mt-2 border-t border-white/10 pt-4">
-                        <Link to="/" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                            &larr; Back to Home
-                        </Link>
-                    </div>
-                </form>
+                        <div className="text-center mt-6 text-sm">
+                            <button
+                                type="button"
+                                onClick={() => setIsOtpMode(false)}
+                                className="font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
+                            >
+                                &larr; Back to Registration
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {isRegistering && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-200 mb-2">Display Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
+                                    placeholder="Your Name"
+                                />
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-200 mb-2">Email Address</label>
+                            <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
+                                placeholder="you@domain.com"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-200 mb-2">Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    minLength={6}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-400 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {isRegistering && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-200 mb-2">Confirm Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        required
+                                        minLength={6}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 transition-all outline-none"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-400 transition-colors"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 px-4 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transform transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? 'Processing...' : isRegistering ? 'Sign Up' : 'Sign In'}
+                        </button>
+
+                        <div className="text-center mt-6 text-sm">
+                            <span className="text-gray-400">
+                                {isRegistering ? 'Already have an account?' : 'Need to join?'}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsRegistering(!isRegistering)}
+                                className="ml-2 font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                            >
+                                {isRegistering ? 'Sign In' : 'Register'}
+                            </button>
+                        </div>
+
+                        <div className="text-center mt-2 border-t border-white/10 pt-4">
+                            <Link to="/" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                                &larr; Back to Home
+                            </Link>
+                        </div>
+                    </form>
+                )}
             </div>
         </div>
     );

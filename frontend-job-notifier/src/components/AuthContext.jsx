@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     const updateToken = (newToken) => {
         setToken(newToken);
         setIdentity(parseJwt(newToken));
+        setIsAuthenticated(true);
         localStorage.setItem('token', newToken);
     };
 
