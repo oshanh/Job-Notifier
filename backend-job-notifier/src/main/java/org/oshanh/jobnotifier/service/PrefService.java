@@ -75,12 +75,18 @@ public class PrefService {
         User user = userRepository.findByEmail(preferenceDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        Set<String> seenLower = new java.util.HashSet<>();
         for (String s : preferenceDTO.getKeyword()) {
-            Keyword keyword = new Keyword();
-            keyword.setKeyword(s);
-            keyword.setPreference(pref);
-            keywords.add(keyword);
-
+            if (s == null || s.trim().isEmpty())
+                continue;
+            String trimmed = s.trim();
+            String lower = trimmed.toLowerCase();
+            if (seenLower.add(lower)) {
+                Keyword keyword = new Keyword();
+                keyword.setKeyword(trimmed);
+                keyword.setPreference(pref);
+                keywords.add(keyword);
+            }
         }
 
         pref.setUser(user);
@@ -127,11 +133,18 @@ public class PrefService {
         }
 
         pref.getKeywords().clear();
+        Set<String> seenLowerUpdate = new java.util.HashSet<>();
         for (String s : preferenceDTO.getKeyword()) {
-            Keyword keyword = new Keyword();
-            keyword.setKeyword(s);
-            keyword.setPreference(pref);
-            pref.getKeywords().add(keyword);
+            if (s == null || s.trim().isEmpty())
+                continue;
+            String trimmed = s.trim();
+            String lower = trimmed.toLowerCase();
+            if (seenLowerUpdate.add(lower)) {
+                Keyword keyword = new Keyword();
+                keyword.setKeyword(trimmed);
+                keyword.setPreference(pref);
+                pref.getKeywords().add(keyword);
+            }
         }
 
         List<Website> websites = new ArrayList<>();

@@ -66,8 +66,13 @@ export default function ProfilePreferencesTab({ email }) {
     };
 
     const addKeyword = () => {
-        if (!newKeyword.trim()) return;
-        setPref(p => ({ ...p, keyword: [...p.keyword, newKeyword.trim()] }));
+        const trimmed = newKeyword.trim();
+        if (!trimmed) return;
+        setPref(p => {
+            const exists = p.keyword.some(k => k.toLowerCase() === trimmed.toLowerCase());
+            if (exists) return p;
+            return { ...p, keyword: [...p.keyword, trimmed] };
+        });
         setNewKeyword("");
     };
 
