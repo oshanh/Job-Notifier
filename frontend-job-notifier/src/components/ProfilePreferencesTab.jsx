@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { prefApi, websiteApi } from '../services/apiClient';
 import { Plus, X, Save, Loader2, BellRing } from 'lucide-react';
+import { commonKeywords } from '../data/commonKeywords';
 
 export default function ProfilePreferencesTab({ email }) {
     const [pref, setPref] = useState(null);
@@ -65,19 +66,38 @@ export default function ProfilePreferencesTab({ email }) {
         }
     };
 
-    const addKeyword = () => {
-        const trimmed = newKeyword.trim();
+    const addSpecificKeyword = (val) => {
+        const trimmed = (val || "").trim();
         if (!trimmed) return;
         setPref(p => {
             const exists = p.keyword.some(k => k.toLowerCase() === trimmed.toLowerCase());
             if (exists) return p;
             return { ...p, keyword: [...p.keyword, trimmed] };
         });
+    };
+
+    const addKeyword = () => {
+        addSpecificKeyword(newKeyword);
         setNewKeyword("");
     };
 
-    const removeKeyword = (kw) => {
-        setPref(p => ({ ...p, keyword: p.keyword.filter(k => k !== kw) }));
+    const removeKeyword = (val) => {
+        setPref(p => ({ ...p, keyword: p.keyword.filter(k => k.toLowerCase() !== val.toLowerCase()) }));
+    };
+
+    const toggleCategory = (keywords) => {
+        setPref(p => {
+            const currentLower = (p.keyword || []).map(k => k.toLowerCase());
+            const allSelected = keywords.every(kw => currentLower.includes(kw.toLowerCase()));
+
+            if (allSelected) {
+                const categoryLower = keywords.map(kw => kw.toLowerCase());
+                return { ...p, keyword: p.keyword.filter(k => !categoryLower.includes(k.toLowerCase())) };
+            } else {
+                const toAdd = keywords.filter(kw => !currentLower.includes(kw.toLowerCase()));
+                return { ...p, keyword: [...p.keyword, ...toAdd] };
+            }
+        });
     };
 
     const toggleWebsite = (websiteDomain) => {
@@ -172,31 +192,75 @@ export default function ProfilePreferencesTab({ email }) {
                 )}
 
                 {/* Keywords List */}
-                <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                    <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-3">Target Interception Keywords</h4>
-                    <div className="flex space-x-3 mb-4">
-                        <input
-                            type="text"
-                            value={newKeyword}
-                            onChange={e => setNewKeyword(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && addKeyword()}
-                            placeholder="e.g. Fullstack, python, DevOps"
-                            className="flex-1 px-4 py-2 bg-black/30 border border-emerald-500/30 rounded-lg focus:ring-2 focus:ring-emerald-500 text-white outline-none text-sm shadow-inner transition-all block w-full"
-                        />
-                        <button onClick={addKeyword} className="flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-colors shadow-md border border-emerald-400/30">
-                            <Plus className="w-5 h-5 mr-1" /> Add
-                        </button>
+                <div className="space-y-4">
+                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">Target Interception Keywords</h4>
+                            <button onClick={handleSave} disabled={isSaving} className="inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-all disabled:opacity-50 text-xs shadow-md border border-emerald-400/30">
+                                {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                                Save Keywords
+                            </button>
+                        </div>
+                        <div className="flex space-x-3 mb-4">
+                            <input
+                                type="text"
+                                value={newKeyword}
+                                onChange={e => setNewKeyword(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addKeyword()}
+                                placeholder="e.g. Fullstack, python, DevOps"
+                                className="flex-1 px-4 py-2 bg-black/30 border border-emerald-500/30 rounded-lg focus:ring-2 focus:ring-emerald-500 text-white outline-none text-sm shadow-inner transition-all block w-full"
+                            />
+                            <button onClick={addKeyword} className="flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-colors shadow-md border border-emerald-400/30">
+                                <Plus className="w-5 h-5 mr-1" /> Add
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 p-3 bg-white/5 rounded-xl border border-white/5 min-h-[60px] items-center text-sm">
+                            {pref.keyword.map((kw, i) => (
+                                <span key={i} className="flex items-center space-x-1.5 pl-3 pr-1.5 py-1 bg-gradient-to-r from-emerald-600/30 to-teal-800/30 border border-emerald-500/50 rounded-full text-emerald-200">
+                                    <span className="font-medium tracking-wide">{kw}</span>
+                                    <button onClick={() => removeKeyword(kw)} className="p-1 hover:bg-emerald-500/30 rounded-full transition-colors text-emerald-400 hover:text-white">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </span>
+                            ))}
+                            {pref.keyword.length === 0 && <p className="px-2 text-gray-500 italic">No job keywords currently targeting...</p>}
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 p-2 bg-white/5 rounded-xl border border-white/5 min-h-[60px] items-center text-sm">
-                        {pref.keyword.map((kw, i) => (
-                            <span key={i} className="flex items-center space-x-1.5 pl-3 pr-1.5 py-1 bg-gradient-to-r from-emerald-600/30 to-teal-800/30 border border-emerald-500/50 rounded-full text-emerald-200">
-                                <span className="font-medium tracking-wide">{kw}</span>
-                                <button onClick={() => removeKeyword(kw)} className="p-1 hover:bg-emerald-500/30 rounded-full transition-colors text-emerald-400 hover:text-white">
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </span>
-                        ))}
-                        {pref.keyword.length === 0 && <p className="px-2 text-gray-500 italic">No job keywords currently targeting...</p>}
+
+                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                        <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-3">Quick Add Categories</h4>
+                        <div className="space-y-4">
+                            {commonKeywords.map(categoryGrp => {
+                                const isAllSelected = categoryGrp.keywords.every(kw => pref.keyword.some(k => k.toLowerCase() === kw.toLowerCase()));
+                                return (
+                                    <div key={categoryGrp.category}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h5 className="text-xs font-medium text-white/50 uppercase tracking-wide">{categoryGrp.category}</h5>
+                                            <button
+                                                onClick={() => toggleCategory(categoryGrp.keywords)}
+                                                className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-white/5 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 rounded transition-colors"
+                                            >
+                                                {isAllSelected ? "Clear All" : "Select All"}
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {categoryGrp.keywords.map(kw => {
+                                                const isAdded = pref.keyword.some(k => k.toLowerCase() === kw.toLowerCase());
+                                                return (
+                                                    <button
+                                                        key={kw}
+                                                        onClick={() => !isAdded ? addSpecificKeyword(kw) : removeKeyword(kw)}
+                                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${isAdded ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                                                    >
+                                                        {kw} {isAdded && <span className="ml-1 opacity-70">✓</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>

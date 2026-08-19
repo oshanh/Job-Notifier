@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 import org.oshanh.jobnotifier.dto.JobEmailMessage;
 
 @Slf4j
@@ -75,7 +76,7 @@ public class PrefService {
         User user = userRepository.findByEmail(preferenceDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Set<String> seenLower = new java.util.HashSet<>();
+        Set<String> seenLower = new HashSet<>();
         for (String s : preferenceDTO.getKeyword()) {
             if (s == null || s.trim().isEmpty())
                 continue;
