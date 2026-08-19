@@ -1,4 +1,4 @@
-import React, { useContext, lazy, Suspense } from 'react';
+import { useContext, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './components/AuthContext';
 import AdminLoginPage from './pages/AdminLoginPage';
