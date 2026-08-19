@@ -48,11 +48,7 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="absolute bottom-8 text-center w-full z-10 opacity-50">
-                <a href="/admin/login" className="text-xs text-gray-400 hover:text-white transition-colors cursor-pointer border-b border-transparent hover:border-white pb-1">
-                    Administrator Login
-                </a>
-            </div>
+        
         </div>
     );
 }

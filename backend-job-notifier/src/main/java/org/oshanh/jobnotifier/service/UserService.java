@@ -1,16 +1,12 @@
 package org.oshanh.jobnotifier.service;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.dto.UserDTO;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.UserRepository;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +17,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public UserDTO save(UserDTO user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -33,7 +29,7 @@ public class UserService {
         u.setName(user.getName());
         u.setPassword(passwordEncoder.encode(user.getPassword()));
         u.setRole(User.ROLE.USER);
-        u.setEnabled(false); // Changed to false: requires OTP verification
+        u.setEnabled(false);
 
         User su = userRepository.save(u);
         UserDTO savedUser = new UserDTO();

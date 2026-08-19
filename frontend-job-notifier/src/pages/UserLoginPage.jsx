@@ -261,7 +261,7 @@ export default function UserLoginPage() {
                             disabled={isLoading}
                             className="w-full py-3 px-4 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(5,150,105,0.4)] transform transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'Processing...' : (isResetCodeSent ? 'Reset Password' : 'Send Reset Link')}
+                            {isLoading ? 'Processing...' : (isResetCodeSent ? 'Reset Password' : 'Send OTP')}
                         </button>
                         <div className="text-center mt-6 text-sm">
                             <button

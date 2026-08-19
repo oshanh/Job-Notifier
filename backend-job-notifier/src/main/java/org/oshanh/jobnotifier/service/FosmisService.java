@@ -6,7 +6,7 @@ import org.oshanh.jobnotifier.exception.ResourceNotFoundException;
 import org.oshanh.jobnotifier.model.FosmisUser;
 import org.oshanh.jobnotifier.repository.FosmisUserRepository;
 import org.springframework.stereotype.Service;
-
+import org.oshanh.jobnotifier.mapper.FosmisUserMapper;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +18,7 @@ public class FosmisService {
 
     public List<FosmisUserDto> getAllUsers() {
         return fosmisUserRepository.findAll().stream()
-                .map(this::mapToDto)
+                .map(FosmisUserMapper::mapToDto)
                 .collect(Collectors.toList());
     }
 
@@ -27,7 +27,7 @@ public class FosmisService {
         FosmisUser user = fosmisUserRepository.findByUsername(lowerCaseUsername)
                 .orElseThrow(
                         () -> new IllegalArgumentException("FosmisUser not found with username: " + lowerCaseUsername));
-        return mapToDto(user);
+        return FosmisUserMapper.mapToDto(user);
     }
 
     public FosmisUserDto createUser(FosmisUserDto dto) {
@@ -47,7 +47,7 @@ public class FosmisService {
         user.setEnabled(true);
 
         FosmisUser savedUser = fosmisUserRepository.save(user);
-        return mapToDto(savedUser);
+        return FosmisUserMapper.mapToDto(savedUser);
     }
 
     public FosmisUserDto updateUser(String username, FosmisUserDto dto) {
@@ -75,7 +75,7 @@ public class FosmisService {
         user.setEnabled(dto.isEnabled());
 
         FosmisUser updatedUser = fosmisUserRepository.save(user);
-        return mapToDto(updatedUser);
+        return FosmisUserMapper.mapToDto(updatedUser);
     }
 
     public void deleteUser(String username) {
@@ -93,15 +93,9 @@ public class FosmisService {
 
         int numberPart = Integer.parseInt(username.substring(2));
         if (numberPart < 10000 || numberPart > 18000) {
-            throw new IllegalArgumentException("The username may not exist yet, or the university membership may have expired.");
+            throw new IllegalArgumentException(
+                    "The username may not exist yet, or the university membership may have expired.");
         }
     }
 
-    private FosmisUserDto mapToDto(FosmisUser user) {
-        FosmisUserDto dto = new FosmisUserDto();
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setEnabled(user.isEnabled());
-        return dto;
-    }
 }

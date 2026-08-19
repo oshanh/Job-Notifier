@@ -10,6 +10,7 @@ import org.oshanh.jobnotifier.util.JwtUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
@@ -25,13 +26,7 @@ public class UserController {
 
     @GetMapping("/me")
     public UserDTO getMyProfile() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentEmail = null;
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
-            currentEmail = ((CustomUserDetails) auth.getPrincipal()).getUsername();
-        } else if (auth != null && auth.getPrincipal() instanceof String) {
-            currentEmail = (String) auth.getPrincipal();
-        }
+        String currentEmail=getCurrentEmail();
 
         if (currentEmail == null) {
             throw new RuntimeException("Unauthorized: Unable to discern profile context");
@@ -48,16 +43,10 @@ public class UserController {
 
     @PutMapping("/me")
     public UserDTO updateMyProfile(@RequestBody UserDTO userDTO) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentEmail = null;
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
-            currentEmail = ((CustomUserDetails) auth.getPrincipal()).getUsername();
-        } else if (auth != null && auth.getPrincipal() instanceof String) {
-            currentEmail = (String) auth.getPrincipal();
-        }
+        String currentEmail = getCurrentEmail();
 
         if (currentEmail == null) {
-            throw new RuntimeException("Unauthorized: Unable to discern profile context");
+            throw new RuntimeException("Unauthorized Action");
         }
 
         // Only mapping allowed fields: name and password
@@ -95,7 +84,7 @@ public class UserController {
             otpService.generateAndSendOtp(newEmail.trim());
             return ResponseEntity.ok(Map.of("message", "OTP sent to new email address"));
         } catch (Exception e) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("message", "Email service is temporarily unavailable. Please try again."));
         }
     }
@@ -110,13 +99,8 @@ public class UserController {
             throw new RuntimeException("Invalid or expired OTP");
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentEmail = null;
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
-            currentEmail = ((CustomUserDetails) auth.getPrincipal()).getUsername();
-        } else if (auth != null && auth.getPrincipal() instanceof String) {
-            currentEmail = (String) auth.getPrincipal();
-        }
+
+        String currentEmail=getCurrentEmail();
 
         // OTP verified successfully for the newEmail address. Formulate a DTO to
         // trigger updateProfileDetails
@@ -134,5 +118,16 @@ public class UserController {
         }
 
         return updated;
+    }
+
+    private String getCurrentEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentEmail = null;
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            currentEmail = ((CustomUserDetails) auth.getPrincipal()).getUsername();
+        } else if (auth != null && auth.getPrincipal() instanceof String) {
+            currentEmail = (String) auth.getPrincipal();
+        }
+        return currentEmail;
     }
 }

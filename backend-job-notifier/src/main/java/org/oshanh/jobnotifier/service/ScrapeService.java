@@ -65,8 +65,13 @@ public class ScrapeService {
     @Value("${fosmis.pwd}")
     private String pwd;
 
+    /*--------------------------------------------
+
+                 Scrape Topjobs.lk
+
+     ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRateString = "${scraper.topjobs.fixed-rate}", timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeTopjobs() {
         log.debug("scraping Topjobs");
 
@@ -158,10 +163,15 @@ public class ScrapeService {
                 .toUriString();
     }
 
-    // airport jobs
-    // @Scheduled(cron = "0 0 0 * * *",zone ="Asia/Colombo")
+
+
+    /*--------------------------------------------
+
+                  Scrape airport.lk
+
+    ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRateString ="${scraper.airport.fixed-rate}" , timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         log.info("scraping AirportJobs");
         Website website = websiteRepository.findByBaseURL("https://www.airport.lk");
@@ -232,8 +242,13 @@ public class ScrapeService {
         return jobDTOS;
     }
 
-    // FOSMIS
 
+
+    /*--------------------------------------------
+
+              Scrape FOSMIS Notifications
+
+    ---------------------------------------------*/
     public List<FosmisNotice> parse(Document noticesPage) {
         Elements rows = noticesPage.select("table tr.trbgc");
         List<FosmisNotice> notices = new ArrayList<>();
@@ -280,7 +295,7 @@ public class ScrapeService {
         }
     }
 
-    @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
+    //@Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
     // @Scheduled(fixedRate = 120,timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
