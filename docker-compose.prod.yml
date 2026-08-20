@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend-job-notifier
+      dockerfile: Dockerfile
+    container_name: job-notifier-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    build:
+      context: ./backend-job-notifier
+      dockerfile: Dockerfile
+    container_name: job-notifier-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend-job-notifier/.env.docker
+    depends_on:
+      - db
+      - rabbitmq
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://db:5432/job-notifier
+      - RABBITMQ_HOST=rabbitmq
+      # Let CORS be handled depending on environment
+      - APP_CORS_ALLOWED_ORIGIN=* 
+
+  db:
+    image: postgres:15
+    container_name: job-notifier-db
+    environment:
+      POSTGRES_USER: oshan
+      POSTGRES_PASSWORD: Kumbalawo
+      POSTGRES_DB: job-notifier
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: job-notifier-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: always
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
