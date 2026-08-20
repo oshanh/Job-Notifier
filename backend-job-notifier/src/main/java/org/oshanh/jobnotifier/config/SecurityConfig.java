@@ -1,6 +1,7 @@
 package org.oshanh.jobnotifier.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,7 +11,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,6 +28,9 @@ import java.util.Arrays;
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthFilter;
+
+        @Value("${app.cors.allowed-origin:http://localhost:5173}")
+        private String allowedOrigin;
 
         @Bean
         public SecurityFilterChain securityFilterChain(
@@ -65,7 +68,7 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+                configuration.setAllowedOrigins(Arrays.asList(allowedOrigin));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                 configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
                 configuration.setAllowCredentials(true);
