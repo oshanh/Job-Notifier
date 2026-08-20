@@ -24,8 +24,7 @@ public class EmailConsumer {
                 message.title(),
                 message.publishedAt(),
                 message.link(),
-                "oshanedu@gmail.com");
-        // message.email());
+                message.email());
 
         long duration = System.currentTimeMillis() - start;
         log.info("FOSMIS email sent to {} in {} ms", message.email(), duration);

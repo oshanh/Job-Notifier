@@ -66,9 +66,9 @@ public class ScrapeService {
     private String pwd;
 
     /*--------------------------------------------
-
+    
                  Scrape Topjobs.lk
-
+    
      ---------------------------------------------*/
     @Transactional
     @Scheduled(fixedRateString = "${scraper.topjobs.fixed-rate}", timeUnit = TimeUnit.MINUTES)
@@ -163,15 +163,13 @@ public class ScrapeService {
                 .toUriString();
     }
 
-
-
     /*--------------------------------------------
-
+    
                   Scrape airport.lk
-
+    
     ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRateString ="${scraper.airport.fixed-rate}" , timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRateString = "${scraper.airport.fixed-rate}", timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         log.info("scraping AirportJobs");
         Website website = websiteRepository.findByBaseURL("https://www.airport.lk");
@@ -189,7 +187,7 @@ public class ScrapeService {
 
         for (String u : URLs) {
             try {
-                Document doc = Jsoup.connect(u).get();
+                Document doc = Jsoup.connect(u).sslSocketFactory(socketFactory()).get();
                 Elements rows = doc.select("table.table tbody tr");
 
                 for (Element row : rows) {
@@ -242,12 +240,34 @@ public class ScrapeService {
         return jobDTOS;
     }
 
+    private javax.net.ssl.SSLSocketFactory socketFactory() {
+        javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
+                new javax.net.ssl.X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
 
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        try {
+            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create a SSL socket factory", e);
+        }
+    }
 
     /*--------------------------------------------
-
+    
               Scrape FOSMIS Notifications
-
+    
     ---------------------------------------------*/
     public List<FosmisNotice> parse(Document noticesPage) {
         Elements rows = noticesPage.select("table tr.trbgc");
@@ -295,8 +315,8 @@ public class ScrapeService {
         }
     }
 
-    //@Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
-    // @Scheduled(fixedRate = 120,timeUnit = TimeUnit.MINUTES)
+    // @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
+    @Scheduled(fixedRate = 120,timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);
