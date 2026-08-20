@@ -17,44 +17,30 @@ public class WebsiteService {
     private final WebsiteRepository websiteRepository;
 
     public WebsiteDTO save(WebsiteDTO websiteDTO) {
-
-        //DTO to entity
         Website website = new Website();
         website.setBaseURL(websiteDTO.getWebsite());
+        website.setEnabled(websiteDTO.isEnabled());
         List<WebsiteURL> websiteURLs = new ArrayList<>();
 
-        for (String url : websiteDTO.getUrl()){
-            WebsiteURL websiteURL = new WebsiteURL();
-            websiteURL.setUrl(url);
-            websiteURL.setWebsite(website);
-            websiteURLs.add(websiteURL);
+        if (websiteDTO.getUrl() != null) {
+            for (String url : websiteDTO.getUrl()) {
+                WebsiteURL websiteURL = new WebsiteURL();
+                websiteURL.setUrl(url);
+                websiteURL.setWebsite(website);
+                websiteURLs.add(websiteURL);
+            }
         }
         website.setUrls(websiteURLs);
 
-        //save
         Website savedWebsite = websiteRepository.save(website);
-
-        //return DTO
-        WebsiteDTO savedWebsiteDTO = new WebsiteDTO();
-        savedWebsiteDTO.setWebsite(savedWebsite.getBaseURL());
-        List<String> savedWebsiteURLs = new ArrayList<>();
-        for (WebsiteURL websiteURL : savedWebsite.getUrls()) {
-            savedWebsiteURLs.add(websiteURL.getUrl());
-        }
-        savedWebsiteDTO.setUrl(savedWebsiteURLs);
-        return savedWebsiteDTO;
-
+        return mapToDTO(savedWebsite);
     }
 
     public List<WebsiteDTO> getAllWebsites() {
-        List<Website>  websites = websiteRepository.findAll();
-        List<WebsiteDTO> websiteDTOs= new ArrayList<>();
+        List<Website> websites = websiteRepository.findAll();
+        List<WebsiteDTO> websiteDTOs = new ArrayList<>();
         for (Website website : websites) {
-            WebsiteDTO websiteDTO = new WebsiteDTO();
-            websiteDTO.setWebsite(website.getBaseURL());
-            List<String> websiteURLs = website.getUrls().stream().map(WebsiteURL::getUrl).toList();
-            websiteDTO.setUrl(websiteURLs);
-            websiteDTOs.add(websiteDTO);
+            websiteDTOs.add(mapToDTO(website));
         }
         return websiteDTOs;
     }
@@ -68,21 +54,69 @@ public class WebsiteService {
             website.setUrls(new ArrayList<>());
         }
 
-        for (String url : urls) {
-            WebsiteURL websiteURL = new WebsiteURL();
-            websiteURL.setUrl(url);
-            websiteURL.setWebsite(website);
-            website.getUrls().add(websiteURL);
+        if (urls != null) {
+            for (String url : urls) {
+                WebsiteURL websiteURL = new WebsiteURL();
+                websiteURL.setUrl(url);
+                websiteURL.setWebsite(website);
+                website.getUrls().add(websiteURL);
+            }
         }
 
         Website savedWebsite = websiteRepository.save(website);
-
-        WebsiteDTO savedWebsiteDTO = new WebsiteDTO();
-        savedWebsiteDTO.setWebsite(savedWebsite.getBaseURL());
-        savedWebsiteDTO.setUrl(savedWebsite.getUrls().stream().map(WebsiteURL::getUrl).toList());
-        return savedWebsiteDTO;
+        return mapToDTO(savedWebsite);
     }
 
+    public WebsiteDTO updateWebsite(String baseURL, WebsiteDTO websiteDTO) {
+        Website website = websiteRepository.findByBaseURL(baseURL);
+        if (website == null) {
+            throw new IllegalArgumentException("Website not found");
+        }
 
-    
+        website.setBaseURL(websiteDTO.getWebsite());
+        website.setEnabled(websiteDTO.isEnabled());
+
+        website.getUrls().clear();
+
+        if (websiteDTO.getUrl() != null) {
+            for (String url : websiteDTO.getUrl()) {
+                WebsiteURL websiteURL = new WebsiteURL();
+                websiteURL.setUrl(url);
+                websiteURL.setWebsite(website);
+                website.getUrls().add(websiteURL);
+            }
+        }
+
+        Website savedWebsite = websiteRepository.save(website);
+        return mapToDTO(savedWebsite);
+    }
+
+    public void softDeleteWebsite(String baseURL) {
+        Website website = websiteRepository.findByBaseURL(baseURL);
+        if (website != null) {
+            website.setEnabled(false);
+            websiteRepository.save(website);
+        }
+    }
+
+    public void hardDeleteWebsite(String baseURL) {
+        Website website = websiteRepository.findByBaseURL(baseURL);
+        if (website != null) {
+            websiteRepository.delete(website);
+        }
+    }
+
+    private WebsiteDTO mapToDTO(Website website) {
+        WebsiteDTO dto = new WebsiteDTO();
+        dto.setWebsite(website.getBaseURL());
+        dto.setEnabled(website.isEnabled());
+        List<String> urls = new ArrayList<>();
+        if (website.getUrls() != null) {
+            for (WebsiteURL websiteURL : website.getUrls()) {
+                urls.add(websiteURL.getUrl());
+            }
+        }
+        dto.setUrl(urls);
+        return dto;
+    }
 }

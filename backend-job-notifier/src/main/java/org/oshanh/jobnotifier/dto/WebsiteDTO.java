@@ -11,5 +11,6 @@ public class WebsiteDTO {
     @NotBlank(message = "website is required")
     private String website;
     private List<String> url;
+    private boolean isEnabled = true;
 
 }

@@ -5,12 +5,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.List;
-
+import java.util.prefs.Preferences;
 
 @Entity
 @Data
 public class Website {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +17,13 @@ public class Website {
 
     private String baseURL;
 
-    @OneToMany(mappedBy = "website" , cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isEnabled = true;
+
+    @OneToMany(mappedBy = "website", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WebsiteURL> urls;
+
+    @ManyToMany(mappedBy = "websites")
+    private List<Preference> preferences;
 
 }

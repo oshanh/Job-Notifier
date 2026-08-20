@@ -2,17 +2,14 @@ package org.oshanh.jobnotifier.controller;
 
 import lombok.AllArgsConstructor;
 import org.oshanh.jobnotifier.dto.PreferenceDTO;
-import org.oshanh.jobnotifier.model.Preference;
-import org.oshanh.jobnotifier.model.Topjobs;
-import org.oshanh.jobnotifier.service.NotificationService;
 import org.oshanh.jobnotifier.service.PrefService;
 import org.oshanh.jobnotifier.service.ScrapeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Scanner;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "pref")
@@ -21,6 +18,7 @@ public class PrefController {
     private final PrefService prefService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or #email == authentication.name")
     public ResponseEntity<?> findByUid(@RequestParam String email) {
         PreferenceDTO preferenceDTO = prefService.findByEmail(email);
         if (preferenceDTO != null) {
@@ -32,11 +30,13 @@ public class PrefController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or #pref.email == authentication.name")
     public PreferenceDTO save(@RequestBody PreferenceDTO pref) {
         return prefService.save(pref);
     }
 
     @PutMapping
+    @PreAuthorize("hasRole('ADMIN') or #pref.email == authentication.name")
     public ResponseEntity<?> update(@RequestBody PreferenceDTO pref) {
         try {
             PreferenceDTO updatedPref = prefService.update(pref);
@@ -47,6 +47,7 @@ public class PrefController {
     }
 
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN') or #email == authentication.name")
     public ResponseEntity<?> delete(@RequestParam String email) {
         try {
             prefService.delete(email);
