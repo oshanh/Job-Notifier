@@ -87,13 +87,13 @@ public class NotificationService {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
-			helper.setFrom(fromEmail);
+			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(toEmail.trim());
 			helper.setSubject(subject);
 			helper.setText(htmlBody, true);
 			mailSender.send(mimeMessage);
 			System.out.println("New Job Postings Notification Sent to " + toEmail);
-		} catch (MessagingException | MailException ex) {
+		} catch (MessagingException | MailException | java.io.UnsupportedEncodingException ex) {
 			throw new MailSendException("Failed to send job postings notification", ex);
 		}
 	}
@@ -204,7 +204,7 @@ public class NotificationService {
 			// 2. Use the helper to set up the email details (true = multipart/HTML enabled)
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-			helper.setFrom(fromEmail);
+			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(toEmail);
 			helper.setSubject(subject);
 
@@ -221,7 +221,7 @@ public class NotificationService {
 			mailSender.send(mimeMessage);
 			return true;
 
-		} catch (MessagingException e) {
+		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
 			log.error("Failed to send AI Response Gmail", e);
 			return false;
 		}
@@ -240,7 +240,7 @@ public class NotificationService {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-			helper.setFrom(fromEmail);
+			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(email);
 			helper.setSubject("📢 New FOSMIS Notice: " + title);
 
@@ -271,7 +271,7 @@ public class NotificationService {
 			helper.setText(html, true); // true = isHtml
 
 			mailSender.send(mimeMessage);
-		} catch (MessagingException e) {
+		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send notice email", e);
 		}
 	}
@@ -286,7 +286,7 @@ public class NotificationService {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-			helper.setFrom(fromEmail);
+			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(toEmail);
 			helper.setSubject("Security Verification: Your JobNotifier OTP");
 
@@ -315,7 +315,7 @@ public class NotificationService {
 
 			helper.setText(html, true);
 			mailSender.send(mimeMessage);
-		} catch (MessagingException e) {
+		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send OTP email", e);
 		}
 	}
