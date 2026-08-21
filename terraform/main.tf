@@ -72,6 +72,15 @@ resource "google_compute_firewall" "allow_http" {
 }
 
 # -------------------------
+# Static IP Address
+# -------------------------
+
+resource "google_compute_address" "job_notifier_ip" {
+  name   = "job-notifier-static-ip"
+  region = var.region
+}
+
+# -------------------------
 # Compute Engine VM
 # -------------------------
 
@@ -94,7 +103,8 @@ resource "google_compute_instance" "job_notifier" {
     subnetwork = google_compute_subnetwork.job_notifier_subnet.id
 
     access_config {
-      # Ephemeral public IP
+      # Use the statically allocated IP
+      nat_ip = google_compute_address.job_notifier_ip.address
     }
   }
 

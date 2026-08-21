@@ -15,7 +15,8 @@ output "vm_name" {
 }
 
 output "vm_external_ip" {
-  value = google_compute_instance.job_notifier.network_interface[0].access_config[0].nat_ip
+  description = "The permanent static external IP of the VM"
+  value       = google_compute_address.job_notifier_ip.address
 }
 
 output "vm_internal_ip" {
