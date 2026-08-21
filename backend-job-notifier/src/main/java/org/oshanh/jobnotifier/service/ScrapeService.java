@@ -169,7 +169,7 @@ public class ScrapeService {
     
     ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRate=10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         log.info("scraping AirportJobs");
         Website website = websiteRepository.findByBaseURL("https://www.airport.lk");
@@ -390,7 +390,7 @@ public class ScrapeService {
 
         if (page == null || page.text().contains("You Have Not Permission")) {
             // cache missing or session expired — log in again
-            log.info("Cache Expired!. Logging again");
+            log.info("Initializing active FOSMIS session...");
             cachedSession = login();
             page = cachedSession.url(NOTICES_URL).get();
         }
