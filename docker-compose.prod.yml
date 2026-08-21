@@ -5,6 +5,8 @@ services:
     build:
       context: ./frontend-job-notifier
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
     container_name: job-notifier-frontend
     ports:
       - "80:80"
@@ -17,30 +19,26 @@ services:
       context: ./backend-job-notifier
       dockerfile: Dockerfile
     container_name: job-notifier-backend
-    ports:
-      - "8080:8080"
     env_file:
       - ./backend-job-notifier/.env.docker
     depends_on:
-      - db
+      - cloud-sql-proxy
       - rabbitmq
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:postgresql://db:5432/job-notifier
+      - DB_URL=jdbc:postgresql://cloud-sql-proxy:5432/job-notifier
       - RABBITMQ_HOST=rabbitmq
-      # Let CORS be handled depending on environment
-      - APP_CORS_ALLOWED_ORIGIN=* 
 
-  db:
-    image: postgres:15
-    container_name: job-notifier-db
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: job-notifier
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  cloud-sql-proxy:
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14
+    container_name: job-notifier-db-proxy
+    command:
+      - "${DB_INSTANCE_CONNECTION_NAME}"
+      - "--address=0.0.0.0"
+      - "--port=5432"
+    ports:
+      - "5432:5432"
     restart: always
 
   rabbitmq:
@@ -51,5 +49,4 @@ services:
     restart: always
 
 volumes:
-  postgres_data:
   rabbitmq_data:

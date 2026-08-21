@@ -63,7 +63,7 @@ resource "google_compute_firewall" "allow_http" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080"]
+    ports    = ["80"]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -116,17 +116,21 @@ resource "google_compute_instance" "job_notifier" {
     # 3. Pull Repository
     if [ ! -d "/opt/job-notifier" ]; then
       mkdir -p /opt/job-notifier
-      git clone https://github.com/oshanh/Job-Notifier.git /opt/job-notifier
+      git clone -b dev-gamini https://github.com/oshanh/Job-Notifier.git /opt/job-notifier
     else
       cd /opt/job-notifier
       git reset --hard
-      git pull origin main
+      git pull origin dev-gamini
     fi
 
     cd /opt/job-notifier
 
     # 4. Fetch the entire configuration .env file from Secret Manager
     gcloud secrets versions access latest --secret="${var.env_secret_name}" > .env
+    
+    # Inject the Cloud SQL connection string dynamically into the .env file
+    echo "" >> .env
+    echo "DB_INSTANCE_CONNECTION_NAME=${var.project_id}:${var.region}:job-notifier-db-instance" >> .env
     
     # 5. Populate backend .env.docker for completeness 
     mkdir -p backend-job-notifier
@@ -154,4 +158,38 @@ resource "google_secret_manager_secret_iam_member" "secret_accessor_binding" {
   secret_id = var.env_secret_name
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+}
+
+resource "google_project_iam_member" "cloudsql_client_binding" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+}
+
+# -------------------------
+# Google Cloud SQL
+# -------------------------
+
+resource "google_sql_database_instance" "postgres" {
+  name             = "job-notifier-db-instance"
+  database_version = "POSTGRES_15"
+  region           = var.region
+
+  settings {
+    tier = "db-f1-micro"
+    # To keep this cheap, no high availability, no automated backups by default on micro
+  }
+
+  deletion_protection = false # Set to true in real production!
+}
+
+resource "google_sql_database" "database" {
+  name     = "job-notifier"
+  instance = google_sql_database_instance.postgres.name
+}
+
+resource "google_sql_user" "users" {
+  name     = var.db_username
+  instance = google_sql_database_instance.postgres.name
+  password = var.db_password
 }
