@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080";
+// In production, point to the self-hosted IP on exactly port 8080. Locally, fall back to localhost.
+const BASE_URL = import.meta.env.PROD ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://localhost:8080";
 
 const apiClient = axios.create({
     baseURL: BASE_URL
