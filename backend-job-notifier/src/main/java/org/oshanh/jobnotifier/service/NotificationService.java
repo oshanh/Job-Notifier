@@ -21,12 +21,15 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+	@org.springframework.beans.factory.annotation.Value("${spring.mail.username}")
+	private String fromEmail;
+
 	private final JavaMailSender mailSender;
 
 	/*--------------------------------------------
-
-          			Helpers
-
+	
+	      			Helpers
+	
 	---------------------------------------------*/
 
 	private String buildAiResHtmlTemplate(String title, String body) {
@@ -68,7 +71,7 @@ public class NotificationService {
 				.formatted(title, body);
 	}
 
-	public void sendNewJobPostingsNotification(String website,String toEmail, List<JobDTO> newJobDTOS) {
+	public void sendNewJobPostingsNotification(String website, String toEmail, List<JobDTO> newJobDTOS) {
 		validateJobNotificationInput(toEmail, newJobDTOS);
 
 		long distinctCompanies = newJobDTOS.stream()
@@ -77,13 +80,14 @@ public class NotificationService {
 				.distinct()
 				.count();
 		String subject = distinctCompanies == 1
-				?website+" - "+ newJobDTOS.get(0).getCompanyName()
-				:website+" - "+ newJobDTOS.size() + " New Jobs";
+				? website + " - " + newJobDTOS.get(0).getCompanyName()
+				: website + " - " + newJobDTOS.size() + " New Jobs";
 		String htmlBody = buildJobPostingsHtml(newJobDTOS);
 
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail.trim());
 			helper.setSubject(subject);
 			helper.setText(htmlBody, true);
@@ -169,16 +173,16 @@ public class NotificationService {
 				.replace("'", "&#39;");
 	}
 
-
 	/*--------------------------------------------
-
-          			Test
-
+	
+	      			Test
+	
 	---------------------------------------------*/
 	public boolean sendTestGmailNotification(String toEmail, String subject, String messageBody) {
 		validateInput(toEmail, subject, messageBody);
 
 		SimpleMailMessage message = new SimpleMailMessage();
+		message.setFrom(fromEmail);
 		message.setTo(toEmail.trim());
 		message.setSubject(subject.trim());
 		message.setText(messageBody.trim());
@@ -200,6 +204,7 @@ public class NotificationService {
 			// 2. Use the helper to set up the email details (true = multipart/HTML enabled)
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail);
 			helper.setSubject(subject);
 
@@ -222,12 +227,10 @@ public class NotificationService {
 		}
 	}
 
-
-
 	/*--------------------------------------------
-
-           FOSMIS Notifications
-
+	
+	       FOSMIS Notifications
+	
 	---------------------------------------------*/
 	public void sendFOSMISNotice(String title,
 			LocalDateTime publishedAt,
@@ -237,6 +240,7 @@ public class NotificationService {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(email);
 			helper.setSubject("📢 New FOSMIS Notice: " + title);
 
@@ -273,15 +277,16 @@ public class NotificationService {
 	}
 
 	/*--------------------------------------------
-
-          OTP Notifications
-
+	
+	      OTP Notifications
+	
 	---------------------------------------------*/
 	public void sendOtpEmail(String toEmail, String otp) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail);
 			helper.setSubject("Security Verification: Your JobNotifier OTP");
 
@@ -314,6 +319,5 @@ public class NotificationService {
 			throw new RuntimeException("Failed to send OTP email", e);
 		}
 	}
-
 
 }
