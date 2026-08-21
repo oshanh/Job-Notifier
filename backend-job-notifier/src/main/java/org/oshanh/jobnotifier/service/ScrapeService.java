@@ -73,7 +73,7 @@ public class ScrapeService {
     @Transactional
     @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeTopjobs() {
-        log.debug("scraping Topjobs");
+        log.info("scraping Topjobs");
 
         Website website = websiteRepository.findByBaseURL("https://www.topjobs.lk");
         List<String> URLs = website.getUrls().stream().map(WebsiteURL::getUrl).toList();
@@ -337,14 +337,8 @@ public class ScrapeService {
         }
         scraped = uniqueScraped;
 
-        List<String> links = scraped.stream()
-                .map(FosmisNotice::getLink)
-                .toList();
-
-        if (links.isEmpty()) {
-            return;
-        }
-        Set<String> existingLinks = fosmisNoticeRepository.findExistingLinks(links);
+        // Highly optimized memory approach: Fetch existing DB links and check in memory
+        Set<String> existingLinks = fosmisNoticeRepository.findAllLinks();
 
         List<FosmisNotice> newNotices = scraped.stream()
                 .filter(notice -> !existingLinks.contains(notice.getLink()))
