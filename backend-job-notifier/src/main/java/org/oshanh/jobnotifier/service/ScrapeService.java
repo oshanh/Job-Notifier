@@ -116,7 +116,7 @@ public class ScrapeService {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Network timeout while scraping TopJobs: {}", e.getMessage());
             }
         }
         Set<Integer> existingJobs = topjobsRepository.getAllJobsRefNos();
@@ -228,7 +228,7 @@ public class ScrapeService {
                     }
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                log.error("Network timeout while scraping Airports: {}", e.getMessage());
             }
 
         }
