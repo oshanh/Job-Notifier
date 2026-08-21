@@ -71,7 +71,7 @@ public class ScrapeService {
     
      ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRateString = "${scraper.topjobs.fixed-rate}", timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeTopjobs() {
         log.debug("scraping Topjobs");
 
@@ -169,7 +169,7 @@ public class ScrapeService {
     
     ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRateString = "${scraper.airport.fixed-rate}", timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate=10, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         log.info("scraping AirportJobs");
         Website website = websiteRepository.findByBaseURL("https://www.airport.lk");

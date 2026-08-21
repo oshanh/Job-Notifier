@@ -251,3 +251,9 @@ resource "google_service_account_iam_member" "github_actions_oidc" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/oshanh/Job-Notifier"
 }
+
+resource "google_project_service" "iamcredentials" {
+  project = var.project_id
+  service = "iamcredentials.googleapis.com"
+  disable_on_destroy = false
+}
