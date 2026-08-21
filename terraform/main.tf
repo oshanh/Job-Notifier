@@ -148,7 +148,7 @@ resource "google_compute_instance" "job_notifier" {
       echo "No SSL certificate found. Provisioning fresh Let's Encrypt certificate..."
       # Stop docker temporarily if it's already running to free up Port 80
       systemctl stop docker || true
-      certbot certonly --standalone -d jobnotifier.tech -d www.jobnotifier.tech --non-interactive --agree-tos -m admin@jobnotifier.tech || true
+      certbot certonly --standalone -d jobnotifier.tech -d www.jobnotifier.tech --non-interactive --agree-tos -m notifications@jobnotifier.tech || true
       systemctl start docker || true
     fi
 
