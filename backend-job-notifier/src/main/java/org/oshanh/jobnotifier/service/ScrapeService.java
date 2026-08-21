@@ -316,7 +316,7 @@ public class ScrapeService {
     }
 
     // @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
-    @Scheduled(fixedRate = 120,timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);
@@ -325,6 +325,17 @@ public class ScrapeService {
 
         // Oldest new notice emails first
         Collections.reverse(scraped);
+
+        // Deduplicate by link to prevent constraint violations if the HTML contains
+        // duplicates
+        List<FosmisNotice> uniqueScraped = new ArrayList<>();
+        Set<String> seenLinks = new HashSet<>();
+        for (FosmisNotice notice : scraped) {
+            if (seenLinks.add(notice.getLink())) {
+                uniqueScraped.add(notice);
+            }
+        }
+        scraped = uniqueScraped;
 
         List<String> links = scraped.stream()
                 .map(FosmisNotice::getLink)
