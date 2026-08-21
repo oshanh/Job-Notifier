@@ -26,7 +26,7 @@ jobs:
 
     - name: Trigger VM Redeployment via SSH
       run: |
-        gcloud compute ssh ubuntu@job-notifier-vm \
+        gcloud compute ssh oshanharshad3@job-notifier-vm \
         --zone "asia-south1-a" \
         --project "project-95fc7c4c-71c2-4a91-931" \
         --command "sudo systemctl restart google-startup-scripts.service" \
