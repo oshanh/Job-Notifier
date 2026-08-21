@@ -357,6 +357,13 @@ public class ScrapeService {
 
         fosmisNoticeRepository.saveAll(newNotices);
 
+        // SAFETY MEASURE: If the database is completely empty (first startup),
+        // do NOT send 6000+ emails! Just populate the database silently.
+        if (existingLinks.isEmpty() && newNotices.size() > 100) {
+            log.info("Initial historical data load complete. Skipping email notifications to prevent spam.");
+            return;
+        }
+
         // Get all FOSMIS users
         List<String> emails = fosmisUserRepository.findAllEnabledEmails();
 
