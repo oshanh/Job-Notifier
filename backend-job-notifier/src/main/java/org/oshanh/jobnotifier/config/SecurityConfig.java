@@ -43,11 +43,11 @@ public class SecurityConfig {
                                                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 .requestMatchers(
-                                                        "/auth/**",
-                                                        "/fosmis-notification/**"
-                                                ).permitAll()
+                                                                "/auth/**",
+                                                                "/fosmis-notification/**")
+                                                .permitAll()
 
-                                                .requestMatchers("/admin/**","/test/**","/fosmis/**").hasRole("ADMIN")
+                                                .requestMatchers("/admin/**", "/test/**", "/fosmis/**").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -68,7 +68,7 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(Arrays.asList(allowedOrigin));
+                configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigin));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                 configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
                 configuration.setAllowCredentials(true);
