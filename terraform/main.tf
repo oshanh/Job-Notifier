@@ -132,7 +132,17 @@ resource "google_compute_instance" "job_notifier" {
     echo "" >> .env
     echo "DB_INSTANCE_CONNECTION_NAME=${var.project_id}:${var.region}:job-notifier-db-instance" >> .env
     
-    # 5. Populate backend .env.docker for completeness 
+    # 5. Provision Let's Encrypt SSL Certificates with Certbot
+    apt-get install -y certbot
+    if [ ! -d "/etc/letsencrypt/live/jobnotifier.tech" ]; then
+      echo "No SSL certificate found. Provisioning fresh Let's Encrypt certificate..."
+      # Stop docker temporarily if it's already running to free up Port 80
+      systemctl stop docker || true
+      certbot certonly --standalone -d jobnotifier.tech -d www.jobnotifier.tech --non-interactive --agree-tos -m admin@jobnotifier.tech || true
+      systemctl start docker || true
+    fi
+
+    # 6. Populate backend .env.docker for completeness 
     mkdir -p backend-job-notifier
     cp .env backend-job-notifier/.env.docker
 
