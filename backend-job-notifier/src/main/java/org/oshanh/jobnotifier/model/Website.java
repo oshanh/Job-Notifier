@@ -15,10 +15,11 @@ public class Website {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String baseURL;
 
-    @Column(nullable = false, columnDefinition = "boolean default true")
-    private boolean isEnabled = true;
+    @Column(nullable = false)
+    private boolean isEnabled;
 
     @OneToMany(mappedBy = "website", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WebsiteURL> urls;

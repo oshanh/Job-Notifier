@@ -36,4 +36,13 @@ public class GlobalExceptionHandler {
         body.put("error", "Unauthorized");
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyExistsException(AlreadyExistsException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Already Exists");
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
 }

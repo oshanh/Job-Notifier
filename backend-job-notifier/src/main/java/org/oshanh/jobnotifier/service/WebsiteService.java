@@ -2,13 +2,20 @@ package org.oshanh.jobnotifier.service;
 
 import lombok.AllArgsConstructor;
 import org.oshanh.jobnotifier.dto.WebsiteDTO;
+import org.oshanh.jobnotifier.exception.AlreadyExistsException;
+import org.oshanh.jobnotifier.exception.ResourceNotFoundException;
 import org.oshanh.jobnotifier.model.Website;
 import org.oshanh.jobnotifier.model.WebsiteURL;
 import org.oshanh.jobnotifier.repository.WebsiteRepository;
 import org.oshanh.jobnotifier.repository.WebsiteURLRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.rmi.AlreadyBoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -17,9 +24,13 @@ public class WebsiteService {
     private final WebsiteRepository websiteRepository;
 
     public WebsiteDTO save(WebsiteDTO websiteDTO) {
+        Website isExist=websiteRepository.findByBaseURL(websiteDTO.getWebsite());
+        if(isExist!=null){
+            throw new AlreadyExistsException("Website Already Exists");
+        }
         Website website = new Website();
         website.setBaseURL(websiteDTO.getWebsite());
-        website.setEnabled(websiteDTO.isEnabled());
+        website.setEnabled(true);
         List<WebsiteURL> websiteURLs = new ArrayList<>();
 
         if (websiteDTO.getUrl() != null) {
@@ -70,7 +81,7 @@ public class WebsiteService {
     public WebsiteDTO updateWebsite(String baseURL, WebsiteDTO websiteDTO) {
         Website website = websiteRepository.findByBaseURL(baseURL);
         if (website == null) {
-            throw new IllegalArgumentException("Website not found");
+            throw new ResourceNotFoundException("Website not found");
         }
 
         website.setBaseURL(websiteDTO.getWebsite());
