@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { prefApi, websiteApi } from '../services/apiClient';
-import { Plus, X, Save, Loader2, BellRing } from 'lucide-react';
+import { Plus, X, Save, Loader2, BellRing, ChevronDown, ChevronUp } from 'lucide-react';
 import { commonKeywords } from '../data/commonKeywords';
 
 export default function ProfilePreferencesTab({ email }) {
@@ -10,6 +10,7 @@ export default function ProfilePreferencesTab({ email }) {
     const [newKeyword, setNewKeyword] = useState("");
     const [availableWebsites, setAvailableWebsites] = useState([]);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [expandedCategories, setExpandedCategories] = useState({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -229,34 +230,51 @@ export default function ProfilePreferencesTab({ email }) {
 
                     <div className="bg-black/20 p-4 rounded-xl border border-white/5">
                         <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-3">Quick Add Categories</h4>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {commonKeywords.map(categoryGrp => {
                                 const isAllSelected = categoryGrp.keywords.every(kw => pref.keyword.some(k => k.toLowerCase() === kw.toLowerCase()));
+                                const isExpanded = !!expandedCategories[categoryGrp.category];
+
                                 return (
-                                    <div key={categoryGrp.category}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h5 className="text-xs font-medium text-white/50 uppercase tracking-wide">{categoryGrp.category}</h5>
+                                    <div key={categoryGrp.category} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all shadow-inner">
+                                        <div
+                                            className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors"
+                                            onClick={() => setExpandedCategories(p => ({ ...p, [categoryGrp.category]: !isExpanded }))}
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <h5 className="text-xs font-medium text-white/50 uppercase tracking-wide">{categoryGrp.category}</h5>
+                                                {isExpanded ? <ChevronUp className="w-4 h-4 text-emerald-500/70" /> : <ChevronDown className="w-4 h-4 text-emerald-500/70" />}
+                                            </div>
+
                                             <button
-                                                onClick={() => toggleCategory(categoryGrp.keywords)}
-                                                className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-white/5 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 rounded transition-colors"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleCategory(categoryGrp.keywords);
+                                                }}
+                                                className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-black/40 hover:bg-emerald-600/30 text-emerald-400 hover:text-emerald-300 rounded transition-colors border border-transparent hover:border-emerald-500/50"
                                             >
                                                 {isAllSelected ? "Clear All" : "Select All"}
                                             </button>
                                         </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {categoryGrp.keywords.map(kw => {
-                                                const isAdded = pref.keyword.some(k => k.toLowerCase() === kw.toLowerCase());
-                                                return (
-                                                    <button
-                                                        key={kw}
-                                                        onClick={() => !isAdded ? addSpecificKeyword(kw) : removeKeyword(kw)}
-                                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${isAdded ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'}`}
-                                                    >
-                                                        {kw} {isAdded && <span className="ml-1 opacity-70">✓</span>}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
+
+                                        {isExpanded && (
+                                            <div className="p-4 pt-0 border-t border-white/5 bg-black/20">
+                                                <div className="flex flex-wrap gap-2 mt-4">
+                                                    {categoryGrp.keywords.map(kw => {
+                                                        const isAdded = pref.keyword.some(k => k.toLowerCase() === kw.toLowerCase());
+                                                        return (
+                                                            <button
+                                                                key={kw}
+                                                                onClick={() => !isAdded ? addSpecificKeyword(kw) : removeKeyword(kw)}
+                                                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${isAdded ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                                                            >
+                                                                {kw} {isAdded && <span className="ml-1 opacity-70">✓</span>}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
