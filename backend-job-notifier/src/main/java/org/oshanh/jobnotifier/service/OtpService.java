@@ -19,21 +19,36 @@ public class OtpService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public void generateAndSendOtp(String email) {
-        // Clean up any existing tokens for this email to prevent collisions
-        otpTokenRepository.deleteByEmail(email);
+        OtpToken existingToken = otpTokenRepository.findByEmail(email).orElse(null);
 
-        // Generate 6-digit cryptographic remote random
-        int otpValue = 100000 + secureRandom.nextInt(900000);
-        String otp = String.valueOf(otpValue);
+        if (existingToken != null && existingToken.getExpirationTime().isAfter(LocalDateTime.now())) {
+            log.info("Resending existing OTP to {}", email);
+            notificationService.sendOtpEmail(email, existingToken.getOtp());
+            return;
+        }
+
+        if (existingToken != null) {
+            log.info("Existing OTP expired for {}", email);
+            otpTokenRepository.delete(existingToken);
+        }
+
+        // Generate a 6-digit cryptographically secure random OTP
+        String otp = String.valueOf(100000 + secureRandom.nextInt(900000));
 
         // Store token valid for 15 minutes
-        OtpToken otpToken = new OtpToken(email, otp, LocalDateTime.now().plusMinutes(15));
-        otpTokenRepository.save(otpToken);
+        OtpToken newOtpToken = new OtpToken(
+                email,
+                otp,
+                LocalDateTime.now().plusMinutes(15)
+        );
 
-        // Dispatch Email
-        log.info("Dispatching email OTP to {}", email);
+        otpTokenRepository.save(newOtpToken);
+
+        // Dispatch email
+        log.info("Sending new OTP to {}", email);
         notificationService.sendOtpEmail(email, otp);
     }
+
 
     public boolean validateOtp(String email, String otp) {
         return otpTokenRepository.findByEmail(email)

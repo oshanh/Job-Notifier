@@ -30,19 +30,18 @@ public class UserService {
                 throw new IllegalArgumentException("Email isn't verified.");
             }
         }
-            User u = new User();
-            u.setEmail(user.getEmail());
-            u.setName(user.getName());
-            u.setPassword(passwordEncoder.encode(user.getPassword()));
-            u.setRole(User.ROLE.USER);
-            u.setEnabled(false);
+        User u = new User();
+        u.setEmail(user.getEmail());
+        u.setName(user.getName());
+        u.setPassword(passwordEncoder.encode(user.getPassword()));
+        u.setRole(User.ROLE.USER);
+        u.setEnabled(false);
 
-            User su = userRepository.save(u);
-            UserDTO savedUser = new UserDTO();
-            savedUser.setEmail(su.getEmail());
-            savedUser.setName(su.getName());
-            return savedUser;
-
+        User su = userRepository.save(u);
+        UserDTO savedUser = new UserDTO();
+        savedUser.setEmail(su.getEmail());
+        savedUser.setName(su.getName());
+        return savedUser;
 
     }
 

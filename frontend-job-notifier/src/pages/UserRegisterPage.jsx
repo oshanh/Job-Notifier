@@ -12,6 +12,7 @@ export default function UserRegisterPage() {
     const [otpCode, setOtpCode] = useState('');
 
     const [name, setName] = useState('');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,7 +55,13 @@ export default function UserRegisterPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await authApi.verifyRegistration({ email, password: otpCode });
+            const payload = {
+                name: name,
+                email: email,
+                password: password,
+                otp: otpCode
+            };
+            const res = await authApi.verifyRegistration(payload);
             if (res.data && res.data.token) {
                 updateToken(res.data.token);
                 navigate('/profile');

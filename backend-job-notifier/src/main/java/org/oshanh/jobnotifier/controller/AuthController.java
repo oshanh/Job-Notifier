@@ -42,10 +42,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResponse register(@RequestBody UserDTO userDTO) {
-        // Save the user (will be inactive initially)
-        userService.save(userDTO);
+        if (userService.emailExists(userDTO.getEmail())) {
+            throw new RuntimeException("User with this email already exists.");
+        }
 
-        // Dispatch OTP to the requested email
+        // Dispatch OTP to the requested email WITHOUT saving them into the DB yet
         otpService.generateAndSendOtp(userDTO.getEmail());
 
         // Return a response carrying just a confirmation message indicating
@@ -54,23 +55,17 @@ public class AuthController {
     }
 
     @PostMapping("/verify-registration")
-    public AuthResponse verifyRegistration(@RequestBody AuthRequest request) { // Reusing AuthRequest for email/otp
-                                                                               // parsing
-        boolean isVerified = otpService.validateOtp(request.getEmail(), request.getPassword()); // "password" field
-                                                                                                // receives OTP
+    public AuthResponse verifyRegistration(@RequestBody UserDTO request) {
+        boolean isVerified = otpService.validateOtp(request.getEmail(), request.getOtp());
 
         if (!isVerified) {
             throw new RuntimeException("Invalid or expired OTP");
         }
 
-        // Activate the user
-        userService.activateUser(request.getEmail());
+        // OTP is inherently trusted at this point. Time to permanently persist &
+        // activate the user in the database.
+        userService.save(request);
 
-        // We cannot use authenticationManager.authenticate here dynamically unless they
-        // provide raw password,
-        // so we manually forge a generic User JWT since they proved they own the email.
-        // The safest approach is requiring the raw password again, or manually
-        // constructing.
         org.oshanh.jobnotifier.model.User user = userService.findByEmailEntity(request.getEmail());
         String roles = user.getRole().name();
         String token = jwtUtil.generateToken(user.getEmail(), roles);

@@ -11,6 +11,7 @@ public class UserDTO {
     private String password;
     private String oldPassword;
     private String token;
+    private String otp;
     private User.ROLE role;
     private boolean enabled;
 }
