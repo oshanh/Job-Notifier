@@ -7,3 +7,4 @@ backend-job-notifier/.env.docker
 *.tfvars
 *.tfvars.json
 crash.log
+terraform/serial.log

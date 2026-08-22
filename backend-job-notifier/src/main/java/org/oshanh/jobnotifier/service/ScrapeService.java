@@ -169,7 +169,7 @@ public class ScrapeService {
     
     ---------------------------------------------*/
     @Transactional
-    @Scheduled(fixedRate =15, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 15, timeUnit = TimeUnit.MINUTES)
     public List<JobDTO> scrapeAirportJobs() {
         log.info("scraping AirportJobs");
         Website website = websiteRepository.findByBaseURL("https://www.airport.lk");
@@ -181,8 +181,7 @@ public class ScrapeService {
             URLs.add("https://www.airport.lk/aasl/careers/careers");
         }
 
-        List<JobDTO> jobDTOS = new ArrayList<>();
-        List<Airportjobs> airportjobs = airportjobsRepository.findAll();
+        List<Airportjobs> existingJobs = airportjobsRepository.findAll();
         List<Airportjobs> scrapedAirportjobs = new ArrayList<>();
 
         for (String u : URLs) {
@@ -210,20 +209,13 @@ public class ScrapeService {
                         ajob.setJobUrl(jobUrl);
                         ajob.setPosition(position);
 
-                        JobDTO jobDTO = new JobDTO();
                         if (!closingDateStr.equalsIgnoreCase("N/A") && !closingDateStr.isEmpty()) {
                             try {
-                                jobDTO.setClosingDate(LocalDate.parse(closingDateStr));
                                 ajob.setClosingDate(LocalDate.parse(closingDateStr));
                             } catch (DateTimeParseException ignored) {
                             }
                         }
 
-                        jobDTO.setPosition(position);
-                        jobDTO.setCompanyName("Airport");
-                        jobDTO.setSource(jobUrl);
-
-                        jobDTOS.add(jobDTO);
                         scrapedAirportjobs.add(ajob);
                     }
                 }
@@ -232,7 +224,23 @@ public class ScrapeService {
             }
 
         }
-        // filter users based on preference
+
+        // filter new jobs using an O(1) HashSet lookup for high performance
+        Set<String> existingSignatures = existingJobs.stream()
+                .map(j -> j.getJobUrl() + "|" + j.getPosition() + "|" + j.getClosingDate())
+                .collect(java.util.stream.Collectors.toSet());
+
+        Set<Airportjobs> newAirportJobs = new HashSet<>();
+        for (Airportjobs scraped : scrapedAirportjobs) {
+            String signature = scraped.getJobUrl() + "|" + scraped.getPosition() + "|" + scraped.getClosingDate();
+            // Only add if this unique composite signature does not already exist in the database
+            if (!existingSignatures.contains(signature)) {
+                newAirportJobs.add(scraped);
+            }
+        }
+
+        airportjobsRepository.saveAll(newAirportJobs);
+        List<JobDTO> jobDTOS = new ArrayList<>(JobMapper.toAirportJobsToJob(newAirportJobs));
 
         if (!jobDTOS.isEmpty()) {
             prefService.sendEmailForPreference(jobDTOS, website);
