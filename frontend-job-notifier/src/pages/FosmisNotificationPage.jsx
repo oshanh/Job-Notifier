@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fosmisPublicApi } from '../services/apiClient';
 import Alert from '../components/Alert';
 
 export default function FosmisNotificationPage() {
+    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
@@ -61,11 +63,19 @@ export default function FosmisNotificationPage() {
         }
 
         try {
-            await fosmisPublicApi.subscribe({ username: lowerCaseUsername, email, isEnabled: true });
-            setStatus('success');
-            setMessage("Successfully subscribed! You will now receive notifications.");
-            setUsername('');
-            setEmail('');
+            const res = await fosmisPublicApi.subscribe({ username: lowerCaseUsername, email, isEnabled: true });
+
+            if (res.data?.message === "OTP_SENT") {
+                navigate('/fosmis-notification/verify', {
+                    state: { username: lowerCaseUsername, email }
+                });
+            } else {
+                // Fallback if backend does not use OTP
+                setStatus('success');
+                setMessage("Successfully subscribed! You will now receive notifications.");
+                setUsername('');
+                setEmail('');
+            }
         } catch (error) {
             setStatus('error');
             setMessage(error.response?.data?.message || "Failed to subscribe. Please try again.");

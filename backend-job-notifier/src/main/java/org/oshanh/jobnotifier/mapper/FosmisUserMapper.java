@@ -9,9 +9,8 @@ public class FosmisUserMapper {
         FosmisUserDto dto = new FosmisUserDto();
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
-        dto.setEnabled(user.isEnabled());
+        dto.setIsEnabled(user.isEnabled());
         return dto;
     }
-
 
 }

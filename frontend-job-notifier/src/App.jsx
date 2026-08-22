@@ -7,6 +7,7 @@ import UserRegisterPage from './pages/UserRegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import FosmisNotificationPage from './pages/FosmisNotificationPage';
+import FosmisVerificationPage from './pages/FosmisVerificationPage';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
@@ -47,6 +48,7 @@ function App() {
             <Route path="/register" element={<UserRegisterPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/fosmis-notification" element={<FosmisNotificationPage />} />
+            <Route path="/fosmis-notification/verify" element={<FosmisVerificationPage />} />
 
             <Route
               path="/profile/*"

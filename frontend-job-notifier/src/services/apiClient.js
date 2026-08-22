@@ -81,7 +81,8 @@ export const websiteApi = {
 };
 
 export const fosmisPublicApi = {
-    subscribe: (data) => apiClient.post('/fosmis-notification', data)
+    subscribe: (data) => apiClient.post('/fosmis-notification', data),
+    verifySubscription: (data) => apiClient.post('/fosmis-notification/verify', data)
 };
 
 export function sendTestGmail(data) {

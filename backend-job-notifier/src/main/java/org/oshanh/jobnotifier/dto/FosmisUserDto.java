@@ -14,5 +14,6 @@ public class FosmisUserDto {
     private String username;
     @Email(message = "Invalid email address")
     private String email;
-    private boolean isEnabled;
+    private Boolean isEnabled = true;
+    private String otp;
 }
