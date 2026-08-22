@@ -324,7 +324,7 @@ public class ScrapeService {
     }
 
     // @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
-    @Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
+    //@Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);

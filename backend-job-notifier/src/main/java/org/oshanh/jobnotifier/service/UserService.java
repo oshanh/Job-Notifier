@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -20,22 +21,28 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserDTO save(UserDTO user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("User with this email already exists");
+        Optional<User> userInDb = userRepository.findByEmail(user.getEmail());
+
+        if (userInDb.isPresent()) {
+            if (userInDb.get().isEnabled()) {
+                throw new IllegalArgumentException("User with this email already exists.");
+            } else {
+                throw new IllegalArgumentException("Email isn't verified.");
+            }
         }
+            User u = new User();
+            u.setEmail(user.getEmail());
+            u.setName(user.getName());
+            u.setPassword(passwordEncoder.encode(user.getPassword()));
+            u.setRole(User.ROLE.USER);
+            u.setEnabled(false);
 
-        User u = new User();
-        u.setEmail(user.getEmail());
-        u.setName(user.getName());
-        u.setPassword(passwordEncoder.encode(user.getPassword()));
-        u.setRole(User.ROLE.USER);
-        u.setEnabled(false);
+            User su = userRepository.save(u);
+            UserDTO savedUser = new UserDTO();
+            savedUser.setEmail(su.getEmail());
+            savedUser.setName(su.getName());
+            return savedUser;
 
-        User su = userRepository.save(u);
-        UserDTO savedUser = new UserDTO();
-        savedUser.setEmail(su.getEmail());
-        savedUser.setName(su.getName());
-        return savedUser;
 
     }
 

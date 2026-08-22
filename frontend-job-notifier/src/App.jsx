@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './components/AuthContext';
 import AdminLoginPage from './pages/AdminLoginPage';
 import UserLoginPage from './pages/UserLoginPage';
+import UserRegisterPage from './pages/UserRegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import FosmisNotificationPage from './pages/FosmisNotificationPage';
@@ -43,6 +44,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<UserLoginPage />} />
+            <Route path="/register" element={<UserRegisterPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/fosmis-notification" element={<FosmisNotificationPage />} />
 

@@ -208,7 +208,7 @@ public class PrefService {
             }
 
             String email = pref.getUser().getEmail();
-            log.info("Sending email to " + email);
+            log.info("Checking user  " + email);
 
             // Collect all matching jobs across all keywords (de-duplicated)
             Set<JobDTO> matchedJobDTOS = new LinkedHashSet<>();

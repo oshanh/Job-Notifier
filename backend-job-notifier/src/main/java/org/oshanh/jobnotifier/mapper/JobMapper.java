@@ -33,6 +33,7 @@ public class JobMapper {
             jobDTO.setPosition(airportjob.getPosition());
             jobDTO.setClosingDate(airportjob.getClosingDate());
             jobDTO.setSource(airportjob.getJobUrl());
+            jobDTO.setCompanyName("Airport");
             jobDTOS.add(jobDTO);
         }
         return jobDTOS;
