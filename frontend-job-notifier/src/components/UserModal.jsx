@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { adminApi } from '../services/apiClient';
 import { X, Save, Loader2, Trash2 } from 'lucide-react';
+import Alert from './Alert';
 
 export default function UserModal({ user, onClose, onRefresh }) {
     const [name, setName] = useState(user.name);
@@ -55,9 +56,11 @@ export default function UserModal({ user, onClose, onRefresh }) {
 
                 <div className="p-6 overflow-y-auto flex-1">
                     {error && (
-                        <div className="mb-4 bg-red-500/20 text-red-200 border border-red-500/50 p-3 rounded-xl text-sm">
-                            {error}
-                        </div>
+                        <Alert
+                            message={error}
+                            type="error"
+                            onClose={() => setError(null)}
+                        />
                     )}
 
                     <form onSubmit={handleUpdate} className="space-y-4">

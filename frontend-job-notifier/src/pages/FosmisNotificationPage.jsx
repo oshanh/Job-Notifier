@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { fosmisPublicApi } from '../services/apiClient';
+import Alert from '../components/Alert';
 
 export default function FosmisNotificationPage() {
     const [username, setUsername] = useState('');
@@ -89,14 +90,18 @@ export default function FosmisNotificationPage() {
 
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
                     {status === 'success' && (
-                        <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-200 text-center font-medium">
-                            {message}
-                        </div>
+                        <Alert
+                            message={message}
+                            type="success"
+                            onClose={() => setStatus('idle')}
+                        />
                     )}
                     {status === 'error' && (
-                        <div className="mb-6 p-4 bg-rose-500/20 border border-rose-500/50 rounded-xl text-rose-200 text-center font-medium">
-                            {message}
-                        </div>
+                        <Alert
+                            message={message}
+                            type="error"
+                            onClose={() => setStatus('idle')}
+                        />
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">

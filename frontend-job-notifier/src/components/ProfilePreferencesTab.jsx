@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { prefApi, websiteApi } from '../services/apiClient';
 import { Plus, X, Save, Loader2, BellRing, ChevronDown, ChevronUp } from 'lucide-react';
 import { commonKeywords } from '../data/commonKeywords';
+import Alert from './Alert';
 
 export default function ProfilePreferencesTab({ email }) {
     const [pref, setPref] = useState(null);
@@ -11,6 +12,8 @@ export default function ProfilePreferencesTab({ email }) {
     const [availableWebsites, setAvailableWebsites] = useState([]);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState({});
+    const [isTargetKeywordsExpanded, setIsTargetKeywordsExpanded] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,7 +64,7 @@ export default function ProfilePreferencesTab({ email }) {
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err) {
             console.error(err);
-            alert("Failed to save preferences");
+            setError(err.response?.data?.message || err.response?.data || "Failed to save preferences");
         } finally {
             setIsSaving(false);
         }
@@ -128,11 +131,12 @@ export default function ProfilePreferencesTab({ email }) {
                     <p className="text-sm text-gray-400">Configure your target keywords and bridging services.</p>
                 </div>
             </div>
-
             {saveSuccess && (
-                <div className="mb-6 p-3 rounded-xl border bg-emerald-500/20 text-emerald-200 border-emerald-500/50 text-sm">
-                    Preferences successfully synchronized!
-                </div>
+                <Alert message="Preferences successfully synchronized!" type="success" onClose={() => setSaveSuccess(false)} />
+            )}
+
+            {error && (
+                <Alert message={error} type="error" onClose={() => setError(null)} />
             )}
 
             <div className="space-y-6">
@@ -194,37 +198,66 @@ export default function ProfilePreferencesTab({ email }) {
 
                 {/* Keywords List */}
                 <div className="space-y-4">
-                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">Target Interception Keywords</h4>
-                            <button onClick={handleSave} disabled={isSaving} className="inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-all disabled:opacity-50 text-xs shadow-md border border-emerald-400/30">
-                                {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
-                                Save Keywords
-                            </button>
+                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all shadow-inner">
+                        <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
+                            <div className="flex items-center space-x-2">
+                                <h4 className="text-[10px] sm:text-xs font-semibold text-emerald-300 uppercase tracking-wider">Target Interception Keywords</h4>
+                            </div>
                         </div>
-                        <div className="flex space-x-3 mb-4">
-                            <input
-                                type="text"
-                                value={newKeyword}
-                                onChange={e => setNewKeyword(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && addKeyword()}
-                                placeholder="e.g. Fullstack, python, DevOps"
-                                className="flex-1 px-4 py-2 bg-black/30 border border-emerald-500/30 rounded-lg focus:ring-2 focus:ring-emerald-500 text-white outline-none text-sm shadow-inner transition-all block w-full"
-                            />
-                            <button onClick={addKeyword} className="flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-colors shadow-md border border-emerald-400/30">
-                                <Plus className="w-5 h-5 mr-1" /> Add
-                            </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 p-3 bg-white/5 rounded-xl border border-white/5 min-h-[60px] items-center text-sm">
-                            {pref.keyword.map((kw, i) => (
-                                <span key={i} className="flex items-center space-x-1.5 pl-3 pr-1.5 py-1 bg-gradient-to-r from-emerald-600/30 to-teal-800/30 border border-emerald-500/50 rounded-full text-emerald-200">
-                                    <span className="font-medium tracking-wide">{kw}</span>
-                                    <button onClick={() => removeKeyword(kw)} className="p-1 hover:bg-emerald-500/30 rounded-full transition-colors text-emerald-400 hover:text-white">
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                </span>
-                            ))}
-                            {pref.keyword.length === 0 && <p className="px-2 text-gray-500 italic">No job keywords currently targeting...</p>}
+
+                        <div className="p-4 pt-0 border-t border-white/5 bg-black/20">
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4 mb-4">
+                                <input
+                                    type="text"
+                                    value={newKeyword}
+                                    onChange={e => setNewKeyword(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addKeyword();
+                                        }
+                                    }}
+                                    placeholder="e.g. Fullstack, python, DevOps"
+                                    className="flex-1 px-4 py-2 bg-black/30 border border-emerald-500/30 rounded-lg focus:ring-2 focus:ring-emerald-500 text-white outline-none text-sm shadow-inner transition-all block w-full"
+                                />
+                                <button onClick={addKeyword} className="flex flex-shrink-0 items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-medium transition-colors shadow-md border border-emerald-400/30 w-full sm:w-auto">
+                                    <Plus className="w-5 h-5 mr-1" /> Add
+                                </button>
+                            </div>
+
+                            <div className="relative pb-3">
+                                {isTargetKeywordsExpanded ? (
+                                    <div className="flex flex-wrap gap-2 p-3 bg-white/5 rounded-xl border border-white/5 min-h-[60px] items-center text-sm transition-all pb-4">
+                                        {[...pref.keyword].reverse().map((kw, i) => (
+                                            <span key={i} className="flex items-center space-x-1.5 pl-3 pr-1.5 py-1 bg-gradient-to-r from-emerald-600/30 to-teal-800/30 border border-emerald-500/50 rounded-full text-emerald-200">
+                                                <span className="font-medium tracking-wide">{kw}</span>
+                                                <button onClick={() => removeKeyword(kw)} className="p-1 hover:bg-emerald-500/30 rounded-full transition-colors text-emerald-400 hover:text-white">
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                        {pref.keyword.length === 0 && <p className="px-2 text-gray-500 italic">No job keywords currently targeting...</p>}
+                                    </div>
+                                ) : (
+                                    <div className="w-full h-8 overflow-hidden relative mb-2" style={{ maskImage: 'linear-gradient(to bottom, black 30%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 100%)' }}>
+                                        <div className="flex flex-wrap gap-2 opacity-50 px-2 pointer-events-none">
+                                            {[...pref.keyword].reverse().map((kw, i) => (
+                                                <span key={i} className="px-2 py-0.5 bg-emerald-900/40 border border-emerald-700/30 rounded-full text-[10px] font-medium text-emerald-300 tracking-wide">{kw}</span>
+                                            ))}
+                                            {pref.keyword.length === 0 && <span className="text-[10px] text-gray-500 italic">No job keywords currently targeting...</span>}
+                                        </div>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => setIsTargetKeywordsExpanded(!isTargetKeywordsExpanded)}
+                                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 p-1 bg-black rounded-full border border-white/10 hover:bg-gray-900 transition-colors shadow-lg z-10"
+                                >
+                                    {isTargetKeywordsExpanded ?
+                                        <ChevronUp className="w-5 h-5 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" /> :
+                                        <ChevronDown className="w-5 h-5 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                                    }
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -241,9 +274,9 @@ export default function ProfilePreferencesTab({ email }) {
                                             className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors"
                                             onClick={() => setExpandedCategories(p => ({ ...p, [categoryGrp.category]: !isExpanded }))}
                                         >
-                                            <div className="flex items-center space-x-2">
-                                                <h5 className="text-xs font-medium text-white/50 uppercase tracking-wide">{categoryGrp.category}</h5>
-                                                {isExpanded ? <ChevronUp className="w-4 h-4 text-emerald-500/70" /> : <ChevronDown className="w-4 h-4 text-emerald-500/70" />}
+                                            <div className="flex items-center space-x-2 min-w-0 pr-2">
+                                                <h5 className="text-[10px] sm:text-xs font-medium text-white/50 uppercase tracking-wide truncate">{categoryGrp.category}</h5>
+                                                {isExpanded ? <ChevronUp className="w-4 h-4 text-emerald-500/70 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-emerald-500/70 flex-shrink-0" />}
                                             </div>
 
                                             <button
@@ -283,12 +316,12 @@ export default function ProfilePreferencesTab({ email }) {
                 </div>
             </div>
 
-            <div className="pt-6 mt-6 border-t border-white/10 flex justify-end">
-                <button onClick={handleSave} disabled={isSaving} className="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-semibold transition-all disabled:opacity-50 text-sm shadow-emerald-900/30 shadow-lg border border-emerald-500/30 hover:scale-[1.02]">
-                    {isSaving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
-                    {isSaving ? 'Synchronizing...' : 'Save Preferences'}
+            <div className="sticky bottom-0 z-50 py-4 mt-6 border-t border-white/10 flex justify-end -mx-6 px-6 sm:mx-0 sm:px-0">
+                <button onClick={handleSave} disabled={isSaving} className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-4 sm:py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-semibold transition-all disabled:opacity-50 text-sm shadow-emerald-900/30 shadow-lg border border-emerald-500/30 hover:scale-[1.02]">
+                    {isSaving ? <Loader2 className="w-5 h-5 mr-2 animate-spin flex-shrink-0" /> : <Save className="w-5 h-5 mr-2 flex-shrink-0" />}
+                    {isSaving ? 'Synchronizing...' : 'Save'}
                 </button>
             </div>
-        </div>
+        </div >
     );
 }

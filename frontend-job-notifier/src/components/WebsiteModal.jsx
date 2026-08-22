@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { websiteApi } from '../services/apiClient';
 import { X, Save, Loader2 } from 'lucide-react';
+import Alert from './Alert';
 
 export default function WebsiteModal({ websiteData, onClose, onRefresh }) {
     const isNew = !websiteData;
@@ -36,7 +37,7 @@ export default function WebsiteModal({ websiteData, onClose, onRefresh }) {
             onClose();
         } catch (err) {
             console.error("Operation failed", err);
-            setError(`Failed to ${isNew ? 'create' : 'update'} website. ${err.response?.data?.message || 'Please try again.'}`);
+            setError(`Failed to ${isNew ? 'create' : 'update'}. ${err.response?.data?.message || 'Please try again.'}`);
             setIsLoading(false);
         }
     };
@@ -52,9 +53,7 @@ export default function WebsiteModal({ websiteData, onClose, onRefresh }) {
 
                 <div className="p-6 overflow-y-auto flex-1">
                     {error && (
-                        <div className="mb-4 bg-red-500/20 text-red-200 border border-red-500/50 p-3 rounded-xl text-sm">
-                            {error}
-                        </div>
+                        <Alert message={error} type="error" onClose={() => setError(null)} />
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">

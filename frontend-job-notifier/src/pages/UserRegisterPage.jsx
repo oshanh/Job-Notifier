@@ -3,6 +3,7 @@ import { AuthContext } from '../components/AuthContext';
 import { userApi, authApi } from '../services/apiClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import Alert from '../components/Alert';
 
 export default function UserRegisterPage() {
     const { updateToken } = useContext(AuthContext);
@@ -91,9 +92,7 @@ export default function UserRegisterPage() {
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
-                        {error}
-                    </div>
+                    <Alert message={error} type="error" onClose={() => setError(null)} />
                 )}
 
                 {isOtpMode ? (

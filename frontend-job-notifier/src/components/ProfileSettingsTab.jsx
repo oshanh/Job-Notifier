@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { userApi } from '../services/apiClient';
 import { UserCog, Loader2, Save, Edit2, X } from 'lucide-react';
 import { AuthContext } from './AuthContext';
+import Alert from './Alert';
 
 export default function ProfileSettingsTab({ email: initialEmail }) {
     const { updateToken } = useContext(AuthContext);
@@ -148,9 +149,11 @@ export default function ProfileSettingsTab({ email: initialEmail }) {
 
             <div className="p-6">
                 {statusMessage && (
-                    <div className={`mb-6 p-4 rounded-xl border text-sm font-medium flex items-center space-x-2 ${statusMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
-                        <span>{statusMessage.text}</span>
-                    </div>
+                    <Alert
+                        message={statusMessage.text}
+                        type={statusMessage.type}
+                        onClose={() => setStatusMessage(null)}
+                    />
                 )}
 
                 <div className="space-y-8">

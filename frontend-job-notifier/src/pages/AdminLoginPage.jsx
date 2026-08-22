@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import Alert from '../components/Alert';
 
 export default function AdminLoginPage() {
     const { login } = useContext(AuthContext);
@@ -40,9 +41,7 @@ export default function AdminLoginPage() {
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
-                        {error}
-                    </div>
+                    <Alert message={error} type="error" onClose={() => setError(null)} />
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
