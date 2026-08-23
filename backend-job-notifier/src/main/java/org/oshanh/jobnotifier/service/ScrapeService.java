@@ -129,7 +129,11 @@ public class ScrapeService {
             } catch (Exception ignored) {
 
             } finally {
-                prefService.sendEmailForPreference(savedJobDTOS, website);
+                log.info("{} New Topjobs saved", savedJobDTOS.size());
+                if(savedNewTopJobs.size() <100) {
+                    prefService.sendEmailForPreference(savedJobDTOS, website);
+                }
+
             }
 
         }
@@ -277,54 +281,9 @@ public class ScrapeService {
               Scrape FOSMIS Notifications
     
     ---------------------------------------------*/
-    public List<FosmisNotice> parse(Document noticesPage) {
-        Elements rows = noticesPage.select("table tr.trbgc");
-        List<FosmisNotice> notices = new ArrayList<>();
 
-        for (Element row : rows) {
-            Elements cells = row.select("td");
-            if (cells.size() < 4)
-                continue;
-
-            String dateText = cells.get(1).text().trim();
-            String title = cells.get(2).text().trim();
-            Element linkEl = cells.get(3).selectFirst("a[href]");
-            if (linkEl == null)
-                continue;
-            String absoluteLink = encodeUrl(linkEl.absUrl("href")); // resolves ../ and relative paths
-            // String absoluteLink =linkEl.absUrl("href"); // resolves ../ and relative
-            // paths
-
-            FosmisNotice notice = new FosmisNotice();
-            notice.setTitle(title);
-            notice.setLink(absoluteLink);
-            try {
-                notice.setPublishedAt(LocalDateTime.parse(dateText, FOSMIS_DATE_FORMAT));
-            } catch (DateTimeParseException e) {
-                notice.setPublishedAt(LocalDateTime.now()); // fallback, don't fail the whole row
-            }
-            notices.add(notice);
-        }
-        return notices;
-    }
-
-    private static String encodeUrl(String rawUrl) {
-        try {
-            URL url = new URL(rawUrl); // lenient — doesn't choke on the space
-            URI encoded = new URI(
-                    url.getProtocol(),
-                    url.getAuthority(),
-                    url.getPath(),
-                    url.getQuery(),
-                    null);
-            return encoded.toASCIIString(); // this step does the actual %20 encoding
-        } catch (MalformedURLException | URISyntaxException e) {
-            return rawUrl; // fall back to raw if something unexpected slips through
-        }
-    }
-
-    // @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
-    @Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
+    //@Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);
@@ -394,6 +353,51 @@ public class ScrapeService {
                 newNotices.size() * emails.size());
     }
 
+    public List<FosmisNotice> parse(Document noticesPage) {
+        Elements rows = noticesPage.select("table tr.trbgc");
+        List<FosmisNotice> notices = new ArrayList<>();
+
+        for (Element row : rows) {
+            Elements cells = row.select("td");
+            if (cells.size() < 4)
+                continue;
+
+            String dateText = cells.get(1).text().trim();
+            String title = cells.get(2).text().trim();
+            Element linkEl = cells.get(3).selectFirst("a[href]");
+            if (linkEl == null)
+                continue;
+            String absoluteLink = encodeUrl(linkEl.absUrl("href")); // resolves ../ and relative paths
+            // String absoluteLink =linkEl.absUrl("href"); // resolves ../ and relative
+            // paths
+
+            FosmisNotice notice = new FosmisNotice();
+            notice.setTitle(title);
+            notice.setLink(absoluteLink);
+            try {
+                notice.setPublishedAt(LocalDateTime.parse(dateText, FOSMIS_DATE_FORMAT));
+            } catch (DateTimeParseException e) {
+                notice.setPublishedAt(LocalDateTime.now()); // fallback, don't fail the whole row
+            }
+            notices.add(notice);
+        }
+        return notices;
+    }
+
+    private static String encodeUrl(String rawUrl) {
+        try {
+            URL url = new URL(rawUrl); // lenient — doesn't choke on the space
+            URI encoded = new URI(
+                    url.getProtocol(),
+                    url.getAuthority(),
+                    url.getPath(),
+                    url.getQuery(),
+                    null);
+            return encoded.toASCIIString(); // this step does the actual %20 encoding
+        } catch (MalformedURLException | URISyntaxException e) {
+            return rawUrl; // fall back to raw if something unexpected slips through
+        }
+    }
     public Document fetchNoticesPageWithCachedSession() throws IOException {
         Document page = tryFetchWithCachedSession();
 
