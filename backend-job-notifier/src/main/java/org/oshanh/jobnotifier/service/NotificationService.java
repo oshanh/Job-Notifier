@@ -86,6 +86,10 @@ public class NotificationService {
 
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("Precedence", "bulk");
+			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(toEmail.trim());
@@ -238,6 +242,10 @@ public class NotificationService {
 			String email) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("Precedence", "bulk");
+			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
 			helper.setFrom(fromEmail, "Job Notifier");
@@ -284,6 +292,9 @@ public class NotificationService {
 	public void sendOtpEmail(String toEmail, String otp) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			mimeMessage.setHeader("Precedence", "bulk");
+			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
 			helper.setFrom(fromEmail, "Job Notifier");
