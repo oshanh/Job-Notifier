@@ -95,8 +95,10 @@ public class ScrapeService {
                     int refNo = Integer.parseInt(cells.get(1).text());
                     String position = cells.get(2).select("h2 span").text();
                     String companyName = cells.get(2).select("h1").text();
+
                     LocalDate openingDate = convertTopJobsDate(cells.get(4).text());
                     LocalDate closingDate = convertTopJobsDate(cells.get(5).text());
+
                     String location = cells.get(6).text();
                     String url = buildTopJobUrl(rid, agentCode, jobCode, empCode);
 
@@ -111,6 +113,7 @@ public class ScrapeService {
                             .build();
 
                     jobs.add(job);
+                    //System.out.println(job);
 
                 }
 
@@ -121,7 +124,16 @@ public class ScrapeService {
         Set<Integer> existingJobs = topjobsRepository.getAllJobsRefNos();
         List<Topjobs> newJobs = jobs.stream().filter(job -> !existingJobs.contains(job.getRefNo())).toList();
         if (!newJobs.isEmpty()) {
+            System.out.println("\n\n==========before===========\n\n");
+            for(Topjobs job : newJobs) {
+                System.out.println("ref_no :"+job.getRefNo()+"\nOpen : "+job.getOpeningDate()+"\nClose : "+job.getClosingDate());
+            }
             List<Topjobs> savedNewTopJobs = topjobsRepository.saveAll(newJobs);
+            System.out.println("\n\n==========after===========\n\n");
+
+            for(Topjobs job : savedNewTopJobs) {
+                System.out.println("ref_no :"+job.getRefNo()+"\nOpen : "+job.getOpeningDate()+"\nClose : "+job.getClosingDate());
+            }
             List<JobDTO> savedJobDTOS = JobMapper.topJobsToJob(savedNewTopJobs);
             try {
 
@@ -132,6 +144,9 @@ public class ScrapeService {
                 log.info("{} New Topjobs saved", savedJobDTOS.size());
                 if(savedNewTopJobs.size() <100) {
                     prefService.sendEmailForPreference(savedJobDTOS, website);
+                }
+                else{
+                    log.info("{} New Topjobs saved", savedJobDTOS.size());
                 }
 
             }
@@ -144,11 +159,15 @@ public class ScrapeService {
 
     // convert date strings to LocalDate
     public LocalDate convertTopJobsDate(String raw) {
+        //System.out.println("incoming date: " + raw);
         if (raw == null || raw.isBlank())
             return null;
         try {
-            return LocalDate.parse(raw.trim(),
+            LocalDate convertedDate= LocalDate.parse(raw.trim(),
                     DateTimeFormatter.ofPattern("EEE MMM d yyyy", Locale.ENGLISH));
+            //System.out.println("converted date: " + convertedDate);
+            return convertedDate;
+
         } catch (DateTimeParseException e) {
 
             return null;
