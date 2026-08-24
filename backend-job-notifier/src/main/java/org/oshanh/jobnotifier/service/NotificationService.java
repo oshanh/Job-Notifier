@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -248,7 +249,7 @@ public class NotificationService {
 
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-			helper.setFrom(fromEmail, "Job Notifier");
+			helper.setFrom(fromEmail, "FOSMIS Notifier");
 			helper.setTo(email);
 			helper.setSubject("📢 New FOSMIS Notice: " + title);
 
@@ -271,7 +272,7 @@ public class NotificationService {
 					    </a>
 					  </div>
 					  <div style="background-color: #f5f5f5; padding: 12px 24px; font-size: 12px; color: #999999;">
-					    Faculty of Science, University of Ruhuna — FOSMIS
+					    By Job Notifier
 					  </div>
 					</div>
 					""".formatted(title, publishedAt, link);
@@ -281,6 +282,87 @@ public class NotificationService {
 			mailSender.send(mimeMessage);
 		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send notice email", e);
+		}
+	}
+
+	/*--------------------------------------------
+	
+	      Kaleni Uni Notifications
+	
+	---------------------------------------------*/
+	public void sendKaleniUniNotice(String title,
+			LocalDate deadline,
+			String link,
+			String email,
+			String department,
+			String employmentType,
+			String salary,
+			String description,
+			String advertisementUrl,
+			String applicationUrl) {
+		try {
+			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("Precedence", "bulk");
+			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+
+			helper.setFrom(fromEmail, "Job Notifier");
+			helper.setTo(email);
+			helper.setSubject("🏛️ New Vacancy @ UoK: " + title);
+
+			String deadlineText = deadline != null ? deadline.toString() : "No Deadline";
+			String safeDept = department != null ? department : "General/Unspecified";
+			String safeType = employmentType != null ? employmentType : "Unspecified";
+			String safeSalary = (salary != null && !salary.isBlank()) ? salary : "Not Disclosed";
+			String safeDesc = (description != null && !description.isBlank()) ? description
+					: "Please view full details via the portal.";
+
+			StringBuilder buttonsHtml = new StringBuilder();
+			buttonsHtml.append("<a href=\"").append(link).append(
+					"\" style=\"display: inline-block; background-color: #A51C30; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">View Portal</a>");
+
+			if (advertisementUrl != null && !advertisementUrl.isBlank()) {
+				buttonsHtml.append("<a href=\"").append(advertisementUrl).append(
+						"\" style=\"display: inline-block; background-color: #4B5563; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">Advertisement</a>");
+			}
+			if (applicationUrl != null && !applicationUrl.isBlank()) {
+				buttonsHtml.append("<a href=\"").append(applicationUrl).append(
+						"\" style=\"display: inline-block; background-color: #2563EB; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">Apply / Form</a>");
+			}
+
+			String html = """
+					<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e5e5e5; border-radius: 10px; overflow: hidden; background-color: #ffffff;">
+					  <div style="background-color: #A51C30; color: #ffffff; padding: 20px 24px; text-align: center;">
+					    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">University of Kelaniya Vacancy</h2>
+					  </div>
+					  <div style="padding: 24px 30px;">
+					    <p style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 8px; line-height: 1.4;">%s</p>
+					    <p style="font-size: 15px; color: #4B5563; margin: 0 0 16px;"><strong>%s</strong> &nbsp;|&nbsp; %s</p>
+
+					    <p style="font-size: 14px; color: #374151; margin: 0 0 20px; line-height: 1.5;">%s</p>
+
+					    <div style="background-color: #F9FAFB; border-left: 4px solid #A51C30; padding: 12px 16px; margin: 0 0 24px;">
+					      <p style="font-size: 14px; color: #4B5563; margin: 0 0 6px;"><strong>Closing Date:</strong> %s</p>
+					      <p style="font-size: 14px; color: #4B5563; margin: 0;"><strong>Salary Setup:</strong> %s</p>
+					    </div>
+
+					    <div style="text-align: center;">
+					      %s
+					    </div>
+					  </div>
+					  <div style="background-color: #F3F4F6; padding: 16px 24px; text-align: center; border-top: 1px solid #E5E7EB;">
+					    <p style="font-size: 12px; color: #6B7280; margin: 0;">This is an automated notification from Job Notifier.<br>Powered by University of Kelaniya Data.</p>
+					  </div>
+					</div>
+					"""
+					.formatted(title, safeDept, safeType, safeDesc, deadlineText, safeSalary, buttonsHtml.toString());
+
+			helper.setText(html, true); // true = isHtml
+			mailSender.send(mimeMessage);
+		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
+			throw new RuntimeException("Failed to send Kaleni Uni notice email", e);
 		}
 	}
 
