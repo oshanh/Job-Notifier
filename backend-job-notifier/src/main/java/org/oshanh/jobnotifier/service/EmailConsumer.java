@@ -34,10 +34,32 @@ public class EmailConsumer {
     public void consumeJob(JobEmailMessage message) {
         try {
             log.info("Sending job email notification to {}", message.getEmail());
-            notificationService.sendNewJobPostingsNotification(message.getWebsite(),message.getEmail(), message.getJobs());
+            notificationService.sendNewJobPostingsNotification(message.getWebsite(), message.getEmail(),
+                    message.getJobs());
             log.info("Job email successfully dispatched to {}", message.getEmail());
         } catch (Exception e) {
             log.error("Failed to neatly send job email via RabbitMQ to {}", message.getEmail(), e);
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.KALENI_QUEUE, concurrency = "${fosmis.email.concurrency:1}")
+    public void consumeKaleni(org.oshanh.jobnotifier.dto.KaleniEmailMessage message) {
+        try {
+            log.info("Sending Kaleniya Uni email to {}", message.email());
+            notificationService.sendKaleniUniNotice(
+                    message.title(),
+                    message.deadline(),
+                    message.portalUrl(),
+                    message.email(),
+                    message.department(),
+                    message.employmentType(),
+                    message.salary(),
+                    message.description(),
+                    message.advertisementUrl(),
+                    message.applicationUrl());
+            log.info("Kaleniya email dispatched to {}", message.email());
+        } catch (Exception e) {
+            log.error("Failed to send Kaleniya email via RabbitMQ to {}", message.email(), e);
         }
     }
 }

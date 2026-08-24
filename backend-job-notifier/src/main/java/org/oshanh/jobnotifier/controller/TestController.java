@@ -3,7 +3,6 @@ package org.oshanh.jobnotifier.controller;
 import lombok.RequiredArgsConstructor;
 import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.dto.TesTGmailDTO;
-import org.oshanh.jobnotifier.model.JobListing;
 import org.oshanh.jobnotifier.service.NotificationService;
 import org.oshanh.jobnotifier.service.ScrapeService;
 import org.oshanh.jobnotifier.service.AIService;

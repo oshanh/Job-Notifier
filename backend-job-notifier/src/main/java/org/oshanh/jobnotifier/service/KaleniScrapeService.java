@@ -31,9 +31,7 @@ import java.util.stream.Collectors;
 public class KaleniScrapeService {
 
         private final KaleniUniJobRepository kaleniUniJobRepository;
-        private final NotificationService notificationService;
-        // Assume an EmailProducer or direct preferred service will be used if needed.
-        // For now we will notify Kaleni subscribers similarly to fosmis users.
+        private final EmailProducer emailProducer;
 
         private static final String VACANCIES_URL = "https://www.kln.ac.lk/vacancies";
         private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -147,17 +145,18 @@ public class KaleniScrapeService {
 
                         for (KaleniUniJob newJob : newJobs) {
                                 try {
-                                        notificationService.sendKaleniUniNotice(
-                                                        newJob.getTitle(),
-                                                        newJob.getDeadline(),
-                                                        newJob.getPortalUrl(),
-                                                        notifyEmail,
-                                                        newJob.getDepartment(),
-                                                        newJob.getEmploymentType(),
-                                                        newJob.getSalary(),
-                                                        newJob.getDescription(),
-                                                        newJob.getAdvertisementUrl(),
-                                                        newJob.getApplicationUrl());
+                                        emailProducer.sendKaleniEmail(
+                                                        new org.oshanh.jobnotifier.dto.KaleniEmailMessage(
+                                                                        newJob.getTitle(),
+                                                                        newJob.getDeadline(),
+                                                                        newJob.getPortalUrl(),
+                                                                        notifyEmail,
+                                                                        newJob.getDepartment(),
+                                                                        newJob.getEmploymentType(),
+                                                                        newJob.getSalary(),
+                                                                        newJob.getDescription(),
+                                                                        newJob.getAdvertisementUrl(),
+                                                                        newJob.getApplicationUrl()));
                                 } catch (Exception e) {
                                         log.error("Failed to send Kaleni Uni email for job {}", newJob.getExternalId(),
                                                         e);

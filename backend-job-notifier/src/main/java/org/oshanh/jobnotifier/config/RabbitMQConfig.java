@@ -21,6 +21,10 @@ public class RabbitMQConfig {
     public static final String JOB_EXCHANGE = "job-exchange";
     public static final String JOB_ROUTING_KEY = "job.email";
 
+    public static final String KALENI_QUEUE = "kaleni-email-queue";
+    public static final String KALENI_EXCHANGE = "kaleni-exchange";
+    public static final String KALENI_ROUTING_KEY = "kaleni.email";
+
     @Bean
     public Queue fosmisEmailQueue() {
         return new Queue(QUEUE, true);
@@ -61,6 +65,27 @@ public class RabbitMQConfig {
                 .bind(jobEmailQueue)
                 .to(jobExchange)
                 .with(JOB_ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue kaleniEmailQueue() {
+        return new Queue(KALENI_QUEUE, true);
+    }
+
+    @Bean
+    public DirectExchange kaleniExchange() {
+        return new DirectExchange(KALENI_EXCHANGE);
+    }
+
+    @Bean
+    public Binding kaleniBinding(
+            Queue kaleniEmailQueue,
+            DirectExchange kaleniExchange) {
+
+        return BindingBuilder
+                .bind(kaleniEmailQueue)
+                .to(kaleniExchange)
+                .with(KALENI_ROUTING_KEY);
     }
 
     @Bean
