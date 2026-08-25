@@ -3,6 +3,9 @@ package org.oshanh.jobnotifier.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.dto.UserDTO;
+import org.oshanh.jobnotifier.exception.AlreadyExistsException;
+import org.oshanh.jobnotifier.exception.InvalidPasswordException;
+import org.oshanh.jobnotifier.exception.UsernameNotFoundException;
 import org.oshanh.jobnotifier.model.User;
 import org.oshanh.jobnotifier.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -25,9 +28,9 @@ public class UserService {
 
         if (userInDb.isPresent()) {
             if (userInDb.get().isEnabled()) {
-                throw new IllegalArgumentException("User with this email already exists.");
+                throw new AlreadyExistsException("User with this email already exists.");
             } else {
-                throw new IllegalArgumentException("Email isn't verified.");
+                throw new AlreadyExistsException("Email isn't verified.");
             }
         }
         User u = new User();
@@ -47,7 +50,7 @@ public class UserService {
 
     public User findByEmailEntity(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User missing in DB context"));
+                .orElseThrow(() -> new UsernameNotFoundException("User missing in DB context"));
     }
 
     public boolean emailExists(String email) {
@@ -70,14 +73,14 @@ public class UserService {
 
     public UserDTO update(String email, UserDTO userDTO) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setName(userDTO.getName());
         // Since we identify by email, updating the email might be risky, but we apply
         // it here if provided.
         // It might be safer to keep the old email if they don't explicitly change it.
         if (userDTO.getEmail() != null) {
             if (!userDTO.getEmail().equals(email) && userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
-                throw new IllegalArgumentException("User with this email already exists");
+                throw new AlreadyExistsException("User with this email already exists");
             }
             user.setEmail(userDTO.getEmail());
         }
@@ -101,12 +104,12 @@ public class UserService {
 
     public void delete(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         userRepository.delete(user);
     }
 
     public UserDTO updateProfileDetails(String email, UserDTO dto) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
             user.setName(dto.getName());
@@ -114,7 +117,7 @@ public class UserService {
 
         if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty() && !dto.getEmail().equals(email)) {
             if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-                throw new IllegalArgumentException("User with this email already exists");
+                throw new AlreadyExistsException("User with this email already exists");
             }
             user.setEmail(dto.getEmail());
             log.info("email from dto =  {}", dto.getEmail());
@@ -122,7 +125,7 @@ public class UserService {
 
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             if (dto.getOldPassword() == null || !passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("Invalid old password");
+                throw new InvalidPasswordException("Invalid old password");
             }
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
