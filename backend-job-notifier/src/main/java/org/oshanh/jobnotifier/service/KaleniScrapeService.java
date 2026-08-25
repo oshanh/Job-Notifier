@@ -6,19 +6,22 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
+import org.oshanh.jobnotifier.dto.JobEmailMessage;
+import org.oshanh.jobnotifier.dto.KaleniUniJobDTO;
+import org.oshanh.jobnotifier.mapper.JobMapper;
 import org.oshanh.jobnotifier.model.KaleniUniJob;
+import org.oshanh.jobnotifier.model.Preference;
 import org.oshanh.jobnotifier.repository.KaleniUniJobRepository;
+import org.oshanh.jobnotifier.repository.PrefRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -32,6 +35,7 @@ public class KaleniScrapeService {
 
         private final KaleniUniJobRepository kaleniUniJobRepository;
         private final EmailProducer emailProducer;
+        private final PrefRepository prefRepository;
 
         private static final String VACANCIES_URL = "https://www.kln.ac.lk/vacancies";
         private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -139,32 +143,38 @@ public class KaleniScrapeService {
                                 .filter(j -> j.getExternalId() != null && existingIds.add(j.getExternalId()))
                                 .toList();
 
+                List<KaleniUniJob> savedKaleniJobs=new ArrayList<>();
                 if (!newJobs.isEmpty()) {
-                        kaleniUniJobRepository.saveAll(newJobs);
+                        savedKaleniJobs=kaleniUniJobRepository.saveAll(newJobs);
                         log.info("Saved {} new Kaleniya jobs.", newJobs.size());
 
-                        for (KaleniUniJob newJob : newJobs) {
+                        if(savedKaleniJobs.size()>30) {
+                                log.warn("Skipped sending {} New Kaleni Uni Jobs", savedKaleniJobs.size());
+                                return savedKaleniJobs;
+                        }
+
+                        //mapToDTO
+                        List<KaleniUniJobDTO>savedKaleniJobsDTO=JobMapper.toKaleniUniJobsDTO(savedKaleniJobs);
+
+                        List<String> userEmails=getSubscribedUsers("https://www.kln.ac.lk","email");
+
+
+                        for (String userEmail : userEmails) {
                                 try {
-                                        emailProducer.sendKaleniEmail(
-                                                        new org.oshanh.jobnotifier.dto.KaleniEmailMessage(
-                                                                        newJob.getTitle(),
-                                                                        newJob.getDeadline(),
-                                                                        newJob.getPortalUrl(),
-                                                                        notifyEmail,
-                                                                        newJob.getDepartment(),
-                                                                        newJob.getEmploymentType(),
-                                                                        newJob.getSalary(),
-                                                                        newJob.getDescription(),
-                                                                        newJob.getAdvertisementUrl(),
-                                                                        newJob.getApplicationUrl()));
+                                        //skip initial job scrape
+
+                                        emailProducer.sendKaleniEmail(new JobEmailMessage(userEmail, savedKaleniJobsDTO));
+
                                 } catch (Exception e) {
-                                        log.error("Failed to send Kaleni Uni email for job {}", newJob.getExternalId(),
-                                                        e);
+                                        log.error("Failed to send Kaleni Uni email to {}",userEmail ,
+                                                e);
                                 }
                         }
+
                 }
 
-                return newJobs;
+                return savedKaleniJobs;
+
         }
 
         private String extractField(String objStr, String fieldName) {
@@ -208,5 +218,31 @@ public class KaleniScrapeService {
                 if (text == null)
                         return "";
                 return text.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        }
+
+        // get users who have subscribed to specific category
+        private List<String> getSubscribedUsers(String baseURL, String notifyChannel) {
+
+                List<Preference> subscribedUsers = prefRepository.findPreferencesByWebsiteBaseUrl(baseURL);
+
+                List<String> users = new ArrayList<>();
+
+                for (Preference subscribedUser : subscribedUsers) {
+                        // filter by notifyChannel
+                        if (!subscribedUser.getUser().isEnabled()) {
+                                continue;
+                        }
+                        if (notifyChannel.equals("email") && subscribedUser.isEmail_enabled()) {
+                                users.add(subscribedUser.getUser().getEmail());
+
+                        } else if (notifyChannel.equals("telegram") && subscribedUser.isTelegram_enabled()) {
+                                users.add(subscribedUser.getTelegram_id());
+                        } else if (notifyChannel.equals("whatsapp") && subscribedUser.isWhatsapp_enabled()) {
+                                users.add(subscribedUser.getWhatsapp_num());
+                        }
+
+                }
+                return users;
+
         }
 }

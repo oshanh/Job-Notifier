@@ -223,7 +223,7 @@ public class PrefService {
 
             if (!matchedJobDTOS.isEmpty()) {
                 try {
-                    emailProducer.sendJobEmail(new JobEmailMessage(email, website, new ArrayList<>(matchedJobDTOS)));
+                    emailProducer.sendJobEmail(new JobEmailMessage(email, website, List.copyOf(matchedJobDTOS)));
                 } catch (Exception e) {
                     // Log and continue — one failed send shouldn't block other users
                     log.error("Error queueing job postings notification to RabbitMQ", e);

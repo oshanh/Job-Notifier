@@ -3,10 +3,11 @@ package org.oshanh.jobnotifier.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.config.RabbitMQConfig;
-import org.oshanh.jobnotifier.dto.FosmisEmailMessage;
-import org.oshanh.jobnotifier.dto.JobEmailMessage;
+import org.oshanh.jobnotifier.dto.*;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -42,24 +43,15 @@ public class EmailConsumer {
         }
     }
 
-    @RabbitListener(queues = RabbitMQConfig.KALENI_QUEUE, concurrency = "${fosmis.email.concurrency:1}")
-    public void consumeKaleni(org.oshanh.jobnotifier.dto.KaleniEmailMessage message) {
+    @RabbitListener(queues = RabbitMQConfig.KALENI_QUEUE, concurrency = "5")
+    public void consumeKaleni(JobEmailMessage message) {
         try {
-            log.info("Sending Kaleniya Uni email to {}", message.email());
-            notificationService.sendKaleniUniNotice(
-                    message.title(),
-                    message.deadline(),
-                    message.portalUrl(),
-                    message.email(),
-                    message.department(),
-                    message.employmentType(),
-                    message.salary(),
-                    message.description(),
-                    message.advertisementUrl(),
-                    message.applicationUrl());
-            log.info("Kaleniya email dispatched to {}", message.email());
+            log.info("Sending Kaleniya Uni email to {}", message.getEmail());
+            notificationService.sendKaleniUniNotice(message.getEmail(), message.getKaleniUniJobs());
+
+            log.info("Kaleniya email dispatched to {}", message.getEmail());
         } catch (Exception e) {
-            log.error("Failed to send Kaleniya email via RabbitMQ to {}", message.email(), e);
+            log.error("Failed to send Kaleniya email via RabbitMQ to {}", message.getEmail(), e);
         }
     }
 }

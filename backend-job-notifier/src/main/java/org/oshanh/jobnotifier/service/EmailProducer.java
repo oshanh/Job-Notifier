@@ -27,7 +27,7 @@ public class EmailProducer {
                 message);
     }
 
-    public void sendKaleniEmail(org.oshanh.jobnotifier.dto.KaleniEmailMessage message) {
+    public void sendKaleniEmail(JobEmailMessage message) {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.KALENI_EXCHANGE,
                 RabbitMQConfig.KALENI_ROUTING_KEY,

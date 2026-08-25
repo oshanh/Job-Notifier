@@ -1,7 +1,9 @@
 package org.oshanh.jobnotifier.mapper;
 
 import org.oshanh.jobnotifier.dto.JobDTO;
+import org.oshanh.jobnotifier.dto.KaleniUniJobDTO;
 import org.oshanh.jobnotifier.model.Airportjobs;
+import org.oshanh.jobnotifier.model.KaleniUniJob;
 import org.oshanh.jobnotifier.model.Topjobs;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,26 @@ public class JobMapper {
             jobDTOS.add(jobDTO);
         }
         return jobDTOS;
+    }
+
+    public static List<KaleniUniJobDTO> toKaleniUniJobsDTO(List<KaleniUniJob> kaleniUniJobs) {
+        List<KaleniUniJobDTO> kaleniUniJobDTOS = new ArrayList<>();
+        for(KaleniUniJob kaleniUniJob : kaleniUniJobs){
+            KaleniUniJobDTO job=new KaleniUniJobDTO(
+                    kaleniUniJob.getTitle(),
+                    kaleniUniJob.getDeadline(),
+                    kaleniUniJob.getPortalUrl(),
+                    kaleniUniJob.getDepartment(),
+                    kaleniUniJob.getEmploymentType(),
+                    kaleniUniJob.getSalary(),
+                    kaleniUniJob.getDescription(),
+                    kaleniUniJob.getAdvertisementUrl(),
+                    kaleniUniJob.getApplicationUrl()    
+                    
+            );
+            kaleniUniJobDTOS.add(job);
+        }
+        return kaleniUniJobDTOS;
     }
 
 }

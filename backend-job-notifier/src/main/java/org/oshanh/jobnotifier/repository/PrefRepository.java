@@ -15,4 +15,7 @@ public interface PrefRepository extends JpaRepository<Preference, Long> {
 
     @Query("SELECT p FROM Preference p JOIN p.websites w WHERE w.id = :websiteId")
     List<Preference> findPreferencesBySubscribedWebsite(@Param("websiteId") Long websiteId);
+
+    @Query("select p from Preference p JOIN p.websites w where w.baseURL=:websiteBaseUrl")
+    List<Preference> findPreferencesByWebsiteBaseUrl(@Param("websiteBaseUrl") String websiteBaseUrl);
 }

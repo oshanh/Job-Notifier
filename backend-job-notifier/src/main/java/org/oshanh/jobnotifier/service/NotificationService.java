@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.dto.JobDTO;
+import org.oshanh.jobnotifier.dto.KaleniUniJobDTO;
 import org.oshanh.jobnotifier.model.FosmisNotice;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
@@ -87,7 +88,7 @@ public class NotificationService {
 
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
-			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
 			mimeMessage.setHeader("Precedence", "bulk");
 			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
 
@@ -243,7 +244,7 @@ public class NotificationService {
 			String email) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
-			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
 			mimeMessage.setHeader("Precedence", "bulk");
 			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
 
@@ -290,19 +291,10 @@ public class NotificationService {
 	      Kaleni Uni Notifications
 	
 	---------------------------------------------*/
-	public void sendKaleniUniNotice(String title,
-			LocalDate deadline,
-			String link,
-			String email,
-			String department,
-			String employmentType,
-			String salary,
-			String description,
-			String advertisementUrl,
-			String applicationUrl) {
+	public void sendKaleniUniNotice(String email, List<KaleniUniJobDTO> jobs) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
-			mimeMessage.setHeader("List-Unsubscribe", "<mailto:unsubscribe@jobnotifier.tech>");
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
 			mimeMessage.setHeader("Precedence", "bulk");
 			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
 
@@ -310,54 +302,42 @@ public class NotificationService {
 
 			helper.setFrom(fromEmail, "Job Notifier");
 			helper.setTo(email);
-			helper.setSubject("🏛️ New Vacancy @ UoK: " + title);
+			helper.setSubject("🏛️ New Vacancies @ UoK (" + jobs.size() + " Jobs)");
 
-			String deadlineText = deadline != null ? deadline.toString() : "No Deadline";
-			String safeDept = department != null ? department : "General/Unspecified";
-			String safeType = employmentType != null ? employmentType : "Unspecified";
-			String safeSalary = (salary != null && !salary.isBlank()) ? salary : "Not Disclosed";
-			String safeDesc = (description != null && !description.isBlank()) ? description
-					: "Please view full details via the portal.";
+			StringBuilder jobsHtml = new StringBuilder();
+			for (org.oshanh.jobnotifier.dto.KaleniUniJobDTO job : jobs) {
+				String safeDept = job.department() != null ? job.department() : "General/Unspecified";
+				String safeType = job.employmentType() != null ? job.employmentType() : "Unspecified";
 
-			StringBuilder buttonsHtml = new StringBuilder();
-			buttonsHtml.append("<a href=\"").append(link).append(
-					"\" style=\"display: inline-block; background-color: #A51C30; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">View Portal</a>");
+				StringBuilder buttonsHtml = new StringBuilder();
+				if (job.advertisementUrl() != null && !job.advertisementUrl().isBlank()) {
+					buttonsHtml.append("<a href=\"").append(job.advertisementUrl()).append(
+							"\" style=\"display: inline-block; background-color: #4B5563; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin-top: 10px;\">Advertisement</a>");
+				}
 
-			if (advertisementUrl != null && !advertisementUrl.isBlank()) {
-				buttonsHtml.append("<a href=\"").append(advertisementUrl).append(
-						"\" style=\"display: inline-block; background-color: #4B5563; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">Advertisement</a>");
-			}
-			if (applicationUrl != null && !applicationUrl.isBlank()) {
-				buttonsHtml.append("<a href=\"").append(applicationUrl).append(
-						"\" style=\"display: inline-block; background-color: #2563EB; color: #ffffff; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; margin: 4px;\">Apply / Form</a>");
+				jobsHtml.append(String.format(
+						"""
+									<div style="padding: 24px 30px; border-bottom: 1px solid #e5e5e5;">
+									    <p style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 8px; line-height: 1.4;">%s</p>
+									    <p style="font-size: 15px; color: #4B5563; margin: 0 0 16px;"><strong>%s</strong> &nbsp;|&nbsp; %s</p>
+									    %s
+									</div>
+								""",
+						job.title(), safeDept, safeType, buttonsHtml.toString()));
 			}
 
 			String html = """
 					<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e5e5e5; border-radius: 10px; overflow: hidden; background-color: #ffffff;">
 					  <div style="background-color: #A51C30; color: #ffffff; padding: 20px 24px; text-align: center;">
-					    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">University of Kelaniya Vacancy</h2>
+					    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">University of Kelaniya Vacancies</h2>
 					  </div>
-					  <div style="padding: 24px 30px;">
-					    <p style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 8px; line-height: 1.4;">%s</p>
-					    <p style="font-size: 15px; color: #4B5563; margin: 0 0 16px;"><strong>%s</strong> &nbsp;|&nbsp; %s</p>
-
-					    <p style="font-size: 14px; color: #374151; margin: 0 0 20px; line-height: 1.5;">%s</p>
-
-					    <div style="background-color: #F9FAFB; border-left: 4px solid #A51C30; padding: 12px 16px; margin: 0 0 24px;">
-					      <p style="font-size: 14px; color: #4B5563; margin: 0 0 6px;"><strong>Closing Date:</strong> %s</p>
-					      <p style="font-size: 14px; color: #4B5563; margin: 0;"><strong>Salary Setup:</strong> %s</p>
-					    </div>
-
-					    <div style="text-align: center;">
-					      %s
-					    </div>
-					  </div>
-					  <div style="background-color: #F3F4F6; padding: 16px 24px; text-align: center; border-top: 1px solid #E5E7EB;">
+					  %s
+					  <div style="background-color: #F3F4F6; padding: 16px 24px; text-align: center;">
 					    <p style="font-size: 12px; color: #6B7280; margin: 0;">This is an automated notification from Job Notifier.<br>Powered by University of Kelaniya Data.</p>
 					  </div>
 					</div>
 					"""
-					.formatted(title, safeDept, safeType, safeDesc, deadlineText, safeSalary, buttonsHtml.toString());
+					.formatted(jobsHtml.toString());
 
 			helper.setText(html, true); // true = isHtml
 			mailSender.send(mimeMessage);
