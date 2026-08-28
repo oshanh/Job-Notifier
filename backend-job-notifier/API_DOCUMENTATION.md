@@ -1,194 +1,144 @@
 # API Documentation
 
-This document lists all available API endpoints in the Job Notifier backend application, along with example requests and responses. The base URL for all local development requests is `http://localhost:8080`.
+This document lists all available API endpoints in the Job Notifier backend application, mapping out request payloads, response bodies, and specific authentication contexts. The base URL for all local development requests is `http://localhost:8080`.
 
 ---
+## 1. Authentication & Identity (Auth API)
+Endpoints for User authentication, JWT issuance, and OTP registration operations. (Publicly Accessible)
 
-## 1. Preferences API
-Endpoints for managing user job-alert preferences.
-
-### Get Preferences (By Email)
-* **URL:** `GET /pref?email=user@example.com`
-* **Query Parameters:** `email` (string, required)
-* **Success Response (200 OK):**
-```json
-{
-  "uid": null,
-  "email": "user@example.com",
-  "keyword": ["java", "spring boot"],
-  "whatsapp_num": null,
-  "telegram_id": null,
-  "whatsapp_enabled": false,
-  "telegram_enabled": false,
-  "email_enabled": true
-}
-```
-
-### Create Preferences
-* **URL:** `POST /pref`
+### Login
+* **URL:** `POST /auth/login`
 * **Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "keyword": ["software engineer", "developer"],
-  "whatsapp_num": "+1234567890",
-  "telegram_id": "user1234",
-  "whatsapp_enabled": true,
-  "telegram_enabled": true,
-  "email_enabled": true
-}
-```
-* **Success Response (200 OK):** Returns the saved `PreferenceDTO`.
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "strongPassword123"
+  }
+  ```
+* **Success Response (200 OK):** `{"token": "<JWT_STRING>"}`
 
-### Update Preferences
-* **URL:** `PUT /pref`
-* **Request Body:** Same shape as Create. Clears and replaces existing keywords.
-* **Success Response (200 OK):** Returns the updated `PreferenceDTO`.
-
-### Delete Preferences
-* **URL:** `DELETE /pref?email=user@example.com`
-* **Query Parameters:** `email` (string, required)
-* **Success Response (200 OK):**
-```text
-Preference deleted successfully
-```
-
----
-
-## 2. User API
-Endpoints for managing user accounts.
-
-### Get All Users
-* **URL:** `GET /user/all`
-* **Success Response (200 OK):**
-```json
-[
+### Register User
+* **URL:** `POST /auth/register`
+* **Request Body:**
+  ```json
   {
     "name": "John Doe",
-    "email": "john@example.com"
+    "email": "user@example.com",
+    "password": "strongpassword"
   }
-]
-```
+  ```
+* **Success Response (200 OK):** `{"token": "OTP_SENT"}` - Dispatches OTP to email asynchronously.
 
-### Create User
-* **URL:** `POST /user/add`
+### Verify Registration OTP
+* **URL:** `POST /auth/verify-registration`
 * **Request Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "user@example.com",
-  "password": "strongPassword123"
-}
-```
-* **Success Response (200 OK):** Returns the saved `UserDTO` (without password).
+  ```json
+  {
+    "email": "user@example.com",
+    "otp": "123456"
+  }
+  ```
+* **Success Response (200 OK):** User is persisted. Returns authentication token: `{"token": "<JWT_STRING>"}` 
+
+### Forgot Password
+* **URL:** `POST /auth/forgot-password`
+* **Request Body:** `{"email": "user@example.com"}`
+* **Success Response (200 OK):** `{"message": "OTP dispatched to your email"}`
+
+### Reset Password
+* **URL:** `POST /auth/reset-password`
+* **Request Body:**
+  ```json
+  {
+    "email": "user@example.com",
+    "otp": "123456",
+    "newPassword": "newSecretPassword!!"
+  }
+  ```
+* **Success Response (200 OK):** `{"message": "Password resetting successfully completed"}`
 
 ---
 
-## 3. Website API
-Endpoints for managing scrapable websites and their specific URLs.
+## 2. Personal Profile (User API)
+Endpoints handling authenticated user contexts.
+*(Requires implicit JWT Login context on all endpoints)*
 
-### Get All Websites
-* **URL:** `GET /websites`
-* **Success Response (200 OK):**
-```json
-[
-  {
-    "website": "TopJobs",
-    "url": [
-      "https://topjobs.lk/applicant/vacancybyfunctionalarea.jsp?FA=SDV",
-      "https://topjobs.lk/applicant/vacancybyfunctionalarea.jsp?FA=ENG"
-    ]
-  }
-]
-```
+### Get Current Profile
+* **URL:** `GET /user/me`
+* **Success Response (200 OK):** Returns stripped Current Context `UserDTO`.
 
-### Create Website
+### Update Current Profile
+* **URL:** `PUT /user/me`
+* **Request Body:** `UserDTO`
+* **Success Response (200 OK):** Updates basic properties like Name. Returns `UserDTO` with refreshed Token.
+
+### Request Email Change 
+* **URL:** `POST /user/request-email-change`
+* **Request Body:** `{"newEmail": "new@domain.com"}` (OTP dispatches to updated inbox).
+
+### Verify Email Change
+* **URL:** `POST /user/verify-email-change`
+* **Request Body:** `{"newEmail": "new@domain.com", "otp": "123456"}`
+
+---
+
+## 3. Administrators (Admin API)
+Endpoints handling deep system overrides and raw database tracking. 
+*(Requires explicitly assigned `ROLE_ADMIN` authentication token)*
+
+### List All Users
+* **URL:** `GET /admin/users/all`
+* **Success Response:** `List<UserDTO>`
+
+### Add/Update/Delete Users directly
+* **URLs:** 
+  * `POST /admin/users/add`
+  * `PUT /admin/users/update`
+  * `DELETE /admin/users/delete`
+* **Request Body:** Requires context-bound `UserDTO`.
+
+---
+
+## 4. Notifications & FOSMIS Engine
+Internal University Student tracking hooks.
+
+### FOSMIS Public Registration (Public)
+* **URL:** `POST /fosmis-notification`
+* **Description:** Initiates subscript-validation. Returns `{"message": "OTP_SENT"}`.
+* **URL:** `POST /fosmis-notification/verify`
+* **Description:** Expects `{ "email", "otp", ...FosmisProperties}`. Sets Active status permanently.
+
+### FOSMIS Administrative Portal
+* **URL:** `GET /fosmis` *(Requires `ROLE_ADMIN`)*
+* **URL:** `GET /fosmis/{username}`
+* **URL:** `POST /fosmis` 
+* **URL:** `PUT /fosmis/{username}` 
+* **URL:** `DELETE /fosmis/{username}` 
+
+---
+
+## 5. System Definitions
+Endpoints for mapping Scrapers to UI constraints.
+
+### Websites APIs *(Requires `ROLE_ADMIN` for POST/PUT/DELETE)*
+* **URL:** `GET /websites` - Retrieves website properties natively.
 * **URL:** `POST /websites`
-* **Request Body:**
-```json
-{
-  "website": "TopJobs",
-  "url": ["https://topjobs.lk/some-section"]
-}
-```
-* **Success Response (200 OK):** Returns the created `WebsiteDTO`.
-
-### Add URLs to Existing Website
 * **URL:** `POST /websites/urls`
-* **Request Body:**
-```json
-{
-  "website": "TopJobs",
-  "url": ["https://topjobs.lk/another-section"]
-}
-```
-* **Success Response (200 OK):** Returns the updated `WebsiteDTO`.
+
+### References/Configurations *(Requires Custom Ownership matching JWT Session OR `ROLE_ADMIN`)*
+* **URL:** `GET /pref` `[?email=target@mail.com]`
+* **URL:** `POST /pref`, `PUT /pref`, `DELETE /pref`
 
 ---
 
-## 4. Test API
-Endpoints for manually triggering scrapes, sending test notifications, and testing integrations via HTTP.
+## 6. Test Executables
+Local utility commands (Often Public / Dev Scoped)
 
-### Scrape TopJobs (Manual Trigger)
-* **URL:** `GET /test/scrape-topjobs`
-* **Description:** Manually triggers the TopJobs scraper, saves new jobs to the DB, and fires preference-matched email notifications.
-* **Success Response (200 OK):** Returns a list of **new** scraped jobs (empty list if no new jobs).
-```json
-[
-  {
-    "position": "Software Engineer",
-    "companyName": "Company XYZ",
-    "source": "https://www.topjobs.lk/...",
-    "closingDate": "2026-09-01"
-  }
-]
-```
-
-### Scrape Airport Jobs (Manual Trigger)
-* **URL:** `GET /test/scrape-airport`
-* **Description:** Manually triggers the Airport & Aviation Services scraper and sends job notification email to `notify.email`.
-* **Success Response (200 OK):** Returns the full list of currently listed airport jobs.
-```json
-[
-  {
-    "position": "Aircraft Technician",
-    "companyName": "Airport",
-    "source": "https://www.airport.lk/...",
-    "closingDate": "2026-09-15"
-  }
-]
-```
-
-### Send Test Gmail
-* **URL:** `POST /test/gmail`
-* **Description:** Sends a custom test email via the configured SMTP server. Returns `true` on success.
-* **Request Body:**
-```json
-{
-  "email": "recipient@example.com",
-  "subject": "Test Subject",
-  "message": "Hello from Job Notifier!"
-}
-```
-* **Success Response (200 OK):**
-```json
-true
-```
-
-### AI Chat / Email
-* **URL:** `GET /test/chat?message=Tell me a joke about Java`
-* **Description:** Sends a prompt to the AI service, which generates a response and emails it to `notify.email`.
-* **Query Parameters:** `message` (string, optional — defaults to `"Tell me a joke about Java"`)
-* **Success Response (200 OK):** Returns the AI-generated response as plain text.
-
----
-
-## 5. Background Scheduled Tasks
-These run automatically and are **not** triggered by HTTP calls.
-
-| Task | Schedule | Description |
-|---|---|---|
-| **FOSMIS Notice Check** | Every 20 minutes | Logs into FOSMIS, scrapes the notice board (`form_53_a.php`), saves new notices to MongoDB, and emails each new notice to `notify.email`. Uses a cached Jsoup session — re-authenticates automatically on session expiry. |
+* `GET /test/scrape-topjobs` 
+* `GET /test/scrape-airport` 
+* `GET /test/scrape-kaleniya-uni`
+* `GET /test/chat?message=AnyPromptText`
+* `POST /test/gmail` - Requires `TesTGmailDTO`
 
 ---
 
@@ -197,8 +147,8 @@ Key properties used by the application (set via `.env` or environment variables)
 
 | Property | Description |
 |---|---|
-| `notify.email` | Email address that receives Airport & FOSMIS notifications |
-| `fosmis.username` | FOSMIS portal login username |
-| `fosmis.pwd` | FOSMIS portal login password |
-| `GMAIL_USERNAME` | Gmail address used as the SMTP sender |
-| `GMAIL_APP_PASSWORD` | 16-character Gmail App Password for SMTP authentication |
+| `notify.email` | Administrative email alert routing pool |
+| `fosmis.username` | Active crawler internal auth username |
+| `fosmis.pwd` | Active crawler internal auth password |
+| `GMAIL_USERNAME` | SMTP sending outbound dispatcher |
+| `GMAIL_APP_PASSWORD` | 16-character SMTP security hash |
