@@ -9,10 +9,8 @@ import org.oshanh.jobnotifier.model.WebsiteURL;
 import org.oshanh.jobnotifier.repository.WebsiteRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.oshanh.jobnotifier.mapper.WebsiteMapper;
 
@@ -22,8 +20,8 @@ public class WebsiteService {
     private final WebsiteRepository websiteRepository;
 
     public WebsiteDTO save(WebsiteDTO websiteDTO) {
-        Website isExist=websiteRepository.findByBaseURL(websiteDTO.getWebsite());
-        if(isExist!=null){
+        Website isExist = websiteRepository.findByBaseURL(websiteDTO.getWebsite());
+        if (isExist != null) {
             throw new AlreadyExistsException("Website Already Exists");
         }
 
@@ -50,14 +48,20 @@ public class WebsiteService {
         }
 
         if (urls != null) {
-            //check duplicated urls
+            // Extract pre-existing DB URLs safely
+            Set<String> existingUrls = website.getUrls().stream()
+                    .map(WebsiteURL::getUrl)
+                    .collect(Collectors.toSet());
+
+            // check duplicated urls inside the payload
             Set<String> urlSet = new HashSet<>(urls);
-            urlSet.addAll(urls);
             for (String url : urlSet) {
-                WebsiteURL websiteURL = new WebsiteURL();
-                websiteURL.setUrl(url);
-                websiteURL.setWebsite(website);
-                website.getUrls().add(websiteURL);
+                if (!existingUrls.contains(url)) {
+                    WebsiteURL websiteURL = new WebsiteURL();
+                    websiteURL.setUrl(url);
+                    websiteURL.setWebsite(website);
+                    website.getUrls().add(websiteURL);
+                }
             }
         }
 
@@ -77,7 +81,9 @@ public class WebsiteService {
         website.getUrls().clear();
 
         if (websiteDTO.getUrl() != null) {
-            for (String url : websiteDTO.getUrl()) {
+            // Deduplicate URLs before persisting to avoid constraint errors
+            Set<String> uniqueUrls = new LinkedHashSet<>(websiteDTO.getUrl());
+            for (String url : uniqueUrls) {
                 WebsiteURL websiteURL = new WebsiteURL();
                 websiteURL.setUrl(url);
                 websiteURL.setWebsite(website);
@@ -103,6 +109,5 @@ public class WebsiteService {
             websiteRepository.delete(website);
         }
     }
-
 
 }

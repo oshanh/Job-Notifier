@@ -22,7 +22,8 @@ export default function WebsiteModal({ websiteData, onClose, onRefresh }) {
         setIsLoading(true);
         setError(null);
 
-        const urlList = urlsText.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+        // Filter out empty lines and implicitly remove duplicates via a Set.
+        const urlList = [...new Set(urlsText.split('\n').map(u => u.trim()).filter(u => u.length > 0))];
 
         try {
             // sending both enabled and isEnabled since jackson mapping can be temperamental based on class properties
