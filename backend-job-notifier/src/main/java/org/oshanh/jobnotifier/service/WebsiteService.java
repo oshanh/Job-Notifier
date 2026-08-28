@@ -7,20 +7,18 @@ import org.oshanh.jobnotifier.exception.ResourceNotFoundException;
 import org.oshanh.jobnotifier.model.Website;
 import org.oshanh.jobnotifier.model.WebsiteURL;
 import org.oshanh.jobnotifier.repository.WebsiteRepository;
-import org.oshanh.jobnotifier.repository.WebsiteURLRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.rmi.AlreadyBoundException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
+
+import org.oshanh.jobnotifier.mapper.WebsiteMapper;
 
 @Service
 @AllArgsConstructor
 public class WebsiteService {
-    private final WebsiteURLRepository websiteURLRepository;
     private final WebsiteRepository websiteRepository;
 
     public WebsiteDTO save(WebsiteDTO websiteDTO) {
@@ -28,30 +26,16 @@ public class WebsiteService {
         if(isExist!=null){
             throw new AlreadyExistsException("Website Already Exists");
         }
-        Website website = new Website();
-        website.setBaseURL(websiteDTO.getWebsite());
-        website.setEnabled(true);
-        List<WebsiteURL> websiteURLs = new ArrayList<>();
 
-        if (websiteDTO.getUrl() != null) {
-            for (String url : websiteDTO.getUrl()) {
-                WebsiteURL websiteURL = new WebsiteURL();
-                websiteURL.setUrl(url);
-                websiteURL.setWebsite(website);
-                websiteURLs.add(websiteURL);
-            }
-        }
-        website.setUrls(websiteURLs);
-
-        Website savedWebsite = websiteRepository.save(website);
-        return mapToDTO(savedWebsite);
+        Website savedWebsite = websiteRepository.save(WebsiteMapper.mapToEntity(websiteDTO));
+        return WebsiteMapper.mapToDTO(savedWebsite);
     }
 
     public List<WebsiteDTO> getAllWebsites() {
         List<Website> websites = websiteRepository.findAll();
         List<WebsiteDTO> websiteDTOs = new ArrayList<>();
         for (Website website : websites) {
-            websiteDTOs.add(mapToDTO(website));
+            websiteDTOs.add(WebsiteMapper.mapToDTO(website));
         }
         return websiteDTOs;
     }
@@ -66,7 +50,10 @@ public class WebsiteService {
         }
 
         if (urls != null) {
-            for (String url : urls) {
+            //check duplicated urls
+            Set<String> urlSet = new HashSet<>(urls);
+            urlSet.addAll(urls);
+            for (String url : urlSet) {
                 WebsiteURL websiteURL = new WebsiteURL();
                 websiteURL.setUrl(url);
                 websiteURL.setWebsite(website);
@@ -75,7 +62,7 @@ public class WebsiteService {
         }
 
         Website savedWebsite = websiteRepository.save(website);
-        return mapToDTO(savedWebsite);
+        return WebsiteMapper.mapToDTO(savedWebsite);
     }
 
     public WebsiteDTO updateWebsite(String baseURL, WebsiteDTO websiteDTO) {
@@ -99,7 +86,7 @@ public class WebsiteService {
         }
 
         Website savedWebsite = websiteRepository.save(website);
-        return mapToDTO(savedWebsite);
+        return WebsiteMapper.mapToDTO(savedWebsite);
     }
 
     public void softDeleteWebsite(String baseURL) {
@@ -117,17 +104,5 @@ public class WebsiteService {
         }
     }
 
-    private WebsiteDTO mapToDTO(Website website) {
-        WebsiteDTO dto = new WebsiteDTO();
-        dto.setWebsite(website.getBaseURL());
-        dto.setEnabled(website.isEnabled());
-        List<String> urls = new ArrayList<>();
-        if (website.getUrls() != null) {
-            for (WebsiteURL websiteURL : website.getUrls()) {
-                urls.add(websiteURL.getUrl());
-            }
-        }
-        dto.setUrl(urls);
-        return dto;
-    }
+
 }

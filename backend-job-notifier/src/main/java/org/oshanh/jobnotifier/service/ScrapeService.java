@@ -1,5 +1,7 @@
 package org.oshanh.jobnotifier.service;
 
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -27,6 +29,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -179,7 +186,7 @@ public class ScrapeService {
             return null;
         }
     }
-
+    //Build TopJobs source URL
     private String buildTopJobUrl(String rid, String agentCode, String jobCode, String empCode) {
 
         return UriComponentsBuilder.fromUriString(BASE_URL)
@@ -190,6 +197,8 @@ public class ScrapeService {
                 .queryParam("pg", PG_PARAM)
                 .toUriString();
     }
+
+
 
     /*--------------------------------------------
     
@@ -277,29 +286,30 @@ public class ScrapeService {
         return jobDTOS;
     }
 
-    private javax.net.ssl.SSLSocketFactory socketFactory() {
-        javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
-                new javax.net.ssl.X509TrustManager() {
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+    private SSLSocketFactory socketFactory() {
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
                         return null;
                     }
 
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
                     }
 
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
                     }
                 }
         };
 
         try {
-            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
             return sslContext.getSocketFactory();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create a SSL socket factory", e);
         }
     }
+
 
     /*--------------------------------------------
     

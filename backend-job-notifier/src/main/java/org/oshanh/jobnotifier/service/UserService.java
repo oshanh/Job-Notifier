@@ -142,7 +142,7 @@ public class UserService {
     }
 
     public void activateUser(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setEnabled(true);
         userRepository.save(user);
     }
@@ -151,7 +151,7 @@ public class UserService {
         if (newPassword == null || newPassword.trim().isEmpty()) {
             throw new IllegalArgumentException("New password cannot be empty");
         }
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }

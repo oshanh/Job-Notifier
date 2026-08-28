@@ -6,15 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oshanh.jobnotifier.dto.JobDTO;
 import org.oshanh.jobnotifier.dto.KaleniUniJobDTO;
-import org.oshanh.jobnotifier.model.FosmisNotice;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -71,37 +69,6 @@ public class NotificationService {
 				</html>
 				"""
 				.formatted(title, body);
-	}
-
-	public void sendNewJobPostingsNotification(String website, String toEmail, List<JobDTO> newJobDTOS) {
-		validateJobNotificationInput(toEmail, newJobDTOS);
-
-		long distinctCompanies = newJobDTOS.stream()
-				.map(JobDTO::getCompanyName)
-				.filter(Objects::nonNull)
-				.distinct()
-				.count();
-		String subject = distinctCompanies == 1
-				? website + " - " + newJobDTOS.get(0).getCompanyName()
-				: website + " - " + newJobDTOS.size() + " New Jobs";
-		String htmlBody = buildJobPostingsHtml(newJobDTOS);
-
-		try {
-			MimeMessage mimeMessage = mailSender.createMimeMessage();
-			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
-			mimeMessage.setHeader("Precedence", "bulk");
-			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
-
-			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
-			helper.setFrom(fromEmail, "Job Notifier");
-			helper.setTo(toEmail.trim());
-			helper.setSubject(subject);
-			helper.setText(htmlBody, true);
-			mailSender.send(mimeMessage);
-			System.out.println("New Job Postings Notification Sent to " + toEmail);
-		} catch (MessagingException | MailException | java.io.UnsupportedEncodingException ex) {
-			throw new MailSendException("Failed to send job postings notification", ex);
-		}
 	}
 
 	private void validateInput(String toEmail, String subject, String messageBody) {
@@ -227,21 +194,60 @@ public class NotificationService {
 			mailSender.send(mimeMessage);
 			return true;
 
-		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
+		} catch (MessagingException | UnsupportedEncodingException e) {
 			log.error("Failed to send AI Response Gmail", e);
 			return false;
 		}
 	}
 
 	/*--------------------------------------------
+
+	      	New Job Posting Notification
+	    TopJobs,Airport
+
+	---------------------------------------------*/
+
+
+
+	public void sendNewJobPostingsNotification(String website, String toEmail, List<JobDTO> newJobDTOS) {
+		validateJobNotificationInput(toEmail, newJobDTOS);
+
+		long distinctCompanies = newJobDTOS.stream()
+				.map(JobDTO::getCompanyName)
+				.filter(Objects::nonNull)
+				.distinct()
+				.count();
+		String subject = distinctCompanies == 1
+				? website + " - " + newJobDTOS.get(0).getCompanyName()
+				: website + " - " + newJobDTOS.size() + " New Jobs";
+		String htmlBody = buildJobPostingsHtml(newJobDTOS);
+
+		try {
+			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
+			mimeMessage.setHeader("Precedence", "bulk");
+			mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+			helper.setFrom(fromEmail, "Job Notifier");
+			helper.setTo(toEmail.trim());
+			helper.setSubject(subject);
+			helper.setText(htmlBody, true);
+			mailSender.send(mimeMessage);
+			System.out.println("New Job Postings Notification Sent to " + toEmail);
+		} catch (MessagingException | MailException | UnsupportedEncodingException ex) {
+			throw new MailSendException("Failed to send job postings notification", ex);
+		}
+	}
+
+
+
+	/*--------------------------------------------
 	
 	       FOSMIS Notifications
 	
 	---------------------------------------------*/
-	public void sendFOSMISNotice(String title,
-			LocalDateTime publishedAt,
-			String link,
-			String email) {
+	public void sendFOSMISNotice(String title,LocalDateTime publishedAt, String link, String email) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
@@ -281,7 +287,7 @@ public class NotificationService {
 			helper.setText(html, true); // true = isHtml
 
 			mailSender.send(mimeMessage);
-		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
+		} catch (MessagingException | UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send notice email", e);
 		}
 	}
@@ -323,7 +329,7 @@ public class NotificationService {
 									    %s
 									</div>
 								""",
-						job.title(), safeDept, safeType, buttonsHtml.toString()));
+						job.title(), safeDept, safeType, buttonsHtml));
 			}
 
 			String html = """
@@ -341,7 +347,7 @@ public class NotificationService {
 
 			helper.setText(html, true); // true = isHtml
 			mailSender.send(mimeMessage);
-		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
+		} catch (MessagingException | UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send Kaleni Uni notice email", e);
 		}
 	}
@@ -388,7 +394,7 @@ public class NotificationService {
 
 			helper.setText(html, true);
 			mailSender.send(mimeMessage);
-		} catch (MessagingException | java.io.UnsupportedEncodingException e) {
+		} catch (MessagingException | UnsupportedEncodingException e) {
 			throw new RuntimeException("Failed to send OTP email", e);
 		}
 	}

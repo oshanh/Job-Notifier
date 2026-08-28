@@ -16,5 +16,6 @@ public class WebsiteURL {
     @JoinColumn(name = "website_id")
     private Website website;
 
+    @Column(unique = true)
     private String url;
 }
