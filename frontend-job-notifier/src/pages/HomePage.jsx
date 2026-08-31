@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
@@ -37,7 +36,7 @@ export default function HomePage() {
 
                 <div className="mt-12 pt-8 flex items-center justify-center space-x-12 opacity-60">
                     <div className="text-center">
-                        <div className="text-3xl font-bold text-white mb-1">500+</div>
+                        <div className="text-3xl font-bold text-white mb-1">100+</div>
                         <div className="text-xs uppercase tracking-widest text-emerald-400">Companies</div>
                     </div>
                     <div className="w-px h-12 bg-white/10"></div>
