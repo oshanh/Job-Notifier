@@ -192,7 +192,10 @@ public class PrefService {
         }
 
         List<Preference> preferences = prefRepository.findPreferencesBySubscribedWebsite(sourceWebsite.getId());
-
+        log.info("checking {} preferences", preferences.size());
+        if (preferences.isEmpty()) {
+            return;
+        }
         URI uri = URI.create(sourceWebsite.getBaseURL());
         String website = uri.getHost();
 

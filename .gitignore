@@ -8,3 +8,5 @@ backend-job-notifier/.env.docker
 *.tfvars.json
 crash.log
 terraform/serial.log
+backend-job-notifier/ruhuna.html
+backend-job-notifier/ruhuna_category.html
