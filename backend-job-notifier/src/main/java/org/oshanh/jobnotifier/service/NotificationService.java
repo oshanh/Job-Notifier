@@ -256,7 +256,7 @@ public class NotificationService {
 
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-			helper.setFrom(fromEmail, "FOSMIS Notifier");
+			helper.setFrom(fromEmail, "FOSMIS");
 			helper.setTo(email);
 			helper.setSubject("📢 New FOSMIS Notice: " + title);
 

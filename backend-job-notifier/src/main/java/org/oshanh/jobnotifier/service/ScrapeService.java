@@ -126,7 +126,6 @@ public class ScrapeService {
                             .build();
 
                     jobs.add(job);
-                    //System.out.println(job);
 
                 }
 
@@ -172,13 +171,11 @@ public class ScrapeService {
 
     // convert date strings to LocalDate
     public LocalDate convertTopJobsDate(String raw) {
-        //System.out.println("incoming date: " + raw);
         if (raw == null || raw.isBlank())
             return null;
         try {
             LocalDate convertedDate= LocalDate.parse(raw.trim(),
                     DateTimeFormatter.ofPattern("EEE MMM d yyyy", Locale.ENGLISH));
-            //System.out.println("converted date: " + convertedDate);
             return convertedDate;
 
         } catch (DateTimeParseException e) {
