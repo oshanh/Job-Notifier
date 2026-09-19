@@ -22,13 +22,13 @@ public class OtpService {
         OtpToken existingToken = otpTokenRepository.findByEmail(email).orElse(null);
 
         if (existingToken != null && existingToken.getExpirationTime().isAfter(LocalDateTime.now())) {
-            log.info("Resending existing OTP to {}", email);
+            log.info("Resending existing OTP to user");
             notificationService.sendOtpEmail(email, existingToken.getOtp());
             return;
         }
 
         if (existingToken != null) {
-            log.info("Existing OTP expired for {}", email);
+            log.info("Existing OTP expired for user");
             otpTokenRepository.delete(existingToken);
         }
 
@@ -45,7 +45,7 @@ public class OtpService {
         otpTokenRepository.save(newOtpToken);
 
         // Dispatch email
-        log.info("Sending new OTP to {}", email);
+        log.info("Sending new OTP to user" );
         notificationService.sendOtpEmail(email, otp);
     }
 
@@ -54,7 +54,7 @@ public class OtpService {
         return otpTokenRepository.findByEmail(email)
                 .map(token -> {
                     if (token.getExpirationTime().isBefore(LocalDateTime.now())) {
-                        log.warn("OTP expired for email {}", email);
+                        log.warn("OTP expired for email user");
                         return false;
                     }
                     boolean isValid = token.getOtp().equals(otp);
