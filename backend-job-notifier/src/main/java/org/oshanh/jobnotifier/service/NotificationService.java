@@ -26,6 +26,21 @@ public class NotificationService {
 
 	private final JavaMailSender mailSender;
 
+	@jakarta.annotation.PostConstruct
+	public void checkEmailAuthenticationOnStart() {
+		if (mailSender instanceof org.springframework.mail.javamail.JavaMailSenderImpl) {
+			org.springframework.mail.javamail.JavaMailSenderImpl impl = (org.springframework.mail.javamail.JavaMailSenderImpl) mailSender;
+			try {
+				impl.testConnection();
+				log.info("Email authentication successful. Ready to send emails.");
+			} catch (jakarta.mail.MessagingException e) {
+				log.error("Email authentication failed! Please check your STMP credentials.", e);
+			}
+		} else {
+			log.warn("JavaMailSender is not an instance of JavaMailSenderImpl, unable to test connection.");
+		}
+	}
+
 	/*--------------------------------------------
 	
 	      			Helpers
@@ -201,13 +216,11 @@ public class NotificationService {
 	}
 
 	/*--------------------------------------------
-
+	
 	      	New Job Posting Notification
 	    TopJobs,Airport
-
+	
 	---------------------------------------------*/
-
-
 
 	public void sendNewJobPostingsNotification(String website, String toEmail, List<JobDTO> newJobDTOS) {
 		validateJobNotificationInput(toEmail, newJobDTOS);
@@ -240,14 +253,12 @@ public class NotificationService {
 		}
 	}
 
-
-
 	/*--------------------------------------------
 	
 	       FOSMIS Notifications
 	
 	---------------------------------------------*/
-	public void sendFOSMISNotice(String title,LocalDateTime publishedAt, String link, String email) {
+	public void sendFOSMISNotice(String title, LocalDateTime publishedAt, String link, String email) {
 		try {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			mimeMessage.setHeader("List-Unsubscribe", "<mailto:notifications@jobnotifier.tech>");
