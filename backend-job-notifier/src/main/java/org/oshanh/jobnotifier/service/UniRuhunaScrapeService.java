@@ -22,6 +22,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +55,7 @@ public class UniRuhunaScrapeService {
             Document doc = Jsoup.connect(TARGET_URL)
                     .userAgent(USER_AGENT)
                     .timeout(15_000)
+                    .sslSocketFactory(socketFactory())
                     .get();
 
             Elements links = doc.select("a[href]");
@@ -114,11 +121,34 @@ public class UniRuhunaScrapeService {
             } catch (Exception e) {
                 log.error("Error pushing emails for Ruhuna jobs: {}", e.getMessage());
             }
-        }
-        else {
+        } else {
             log.info("No new University of Ruhuna jobs found.");
         }
 
         return savedJobDTOS;
+    }
+
+    private SSLSocketFactory socketFactory() {
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create a SSL socket factory", e);
+        }
     }
 }

@@ -94,7 +94,7 @@ public class ScrapeService {
 
         for (String u : URLs) {
             try {
-                Document doc = Jsoup.connect(u).get();
+                Document doc = Jsoup.connect(u).timeout(15_000).get();
                 Elements rows = doc.select("table tbody tr[id^=tr]");
 
                 for (Element row : rows) {
@@ -137,14 +137,16 @@ public class ScrapeService {
         List<Topjobs> newJobs = jobs.stream().filter(job -> !existingJobs.contains(job.getRefNo())).toList();
         if (!newJobs.isEmpty()) {
             System.out.println("\n\n==========before===========\n\n");
-            for(Topjobs job : newJobs) {
-                System.out.println("ref_no :"+job.getRefNo()+"\nOpen : "+job.getOpeningDate()+"\nClose : "+job.getClosingDate());
+            for (Topjobs job : newJobs) {
+                System.out.println("ref_no :" + job.getRefNo() + "\nOpen : " + job.getOpeningDate() + "\nClose : "
+                        + job.getClosingDate());
             }
             List<Topjobs> savedNewTopJobs = topjobsRepository.saveAll(newJobs);
             System.out.println("\n\n==========after===========\n\n");
 
-            for(Topjobs job : savedNewTopJobs) {
-                System.out.println("ref_no :"+job.getRefNo()+"\nOpen : "+job.getOpeningDate()+"\nClose : "+job.getClosingDate());
+            for (Topjobs job : savedNewTopJobs) {
+                System.out.println("ref_no :" + job.getRefNo() + "\nOpen : " + job.getOpeningDate() + "\nClose : "
+                        + job.getClosingDate());
             }
             List<JobDTO> savedJobDTOS = JobMapper.topJobsToJob(savedNewTopJobs);
             try {
@@ -154,10 +156,9 @@ public class ScrapeService {
 
             } finally {
                 log.info("{} New Topjobs saved", savedJobDTOS.size());
-                if(savedNewTopJobs.size() <100) {
+                if (savedNewTopJobs.size() < 100) {
                     prefService.sendEmailForPreference(savedJobDTOS, website);
-                }
-                else{
+                } else {
                     log.info("{} New Topjobs saved", savedJobDTOS.size());
                 }
 
@@ -174,7 +175,7 @@ public class ScrapeService {
         if (raw == null || raw.isBlank())
             return null;
         try {
-            LocalDate convertedDate= LocalDate.parse(raw.trim(),
+            LocalDate convertedDate = LocalDate.parse(raw.trim(),
                     DateTimeFormatter.ofPattern("EEE MMM d yyyy", Locale.ENGLISH));
             return convertedDate;
 
@@ -183,7 +184,8 @@ public class ScrapeService {
             return null;
         }
     }
-    //Build TopJobs source URL
+
+    // Build TopJobs source URL
     private String buildTopJobUrl(String rid, String agentCode, String jobCode, String empCode) {
 
         return UriComponentsBuilder.fromUriString(BASE_URL)
@@ -194,8 +196,6 @@ public class ScrapeService {
                 .queryParam("pg", PG_PARAM)
                 .toUriString();
     }
-
-
 
     /*--------------------------------------------
     
@@ -220,7 +220,7 @@ public class ScrapeService {
 
         for (String u : URLs) {
             try {
-                Document doc = Jsoup.connect(u).sslSocketFactory(socketFactory()).get();
+                Document doc = Jsoup.connect(u).timeout(15_000).sslSocketFactory(socketFactory()).get();
                 Elements rows = doc.select("table.table tbody tr");
 
                 for (Element row : rows) {
@@ -307,7 +307,6 @@ public class ScrapeService {
         }
     }
 
-
     /*--------------------------------------------
     
               Scrape FOSMIS Notifications
@@ -315,7 +314,7 @@ public class ScrapeService {
     ---------------------------------------------*/
 
     @Scheduled(cron = "0 0,30 8-17 * * MON-FRI")
-    //@Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
+    // @Scheduled(fixedRate = 120, timeUnit = TimeUnit.MINUTES)
     public void checkForNewNotices() throws IOException {
         Document page = fetchNoticesPageWithCachedSession();
         List<FosmisNotice> scraped = parse(page);
@@ -430,6 +429,7 @@ public class ScrapeService {
             return rawUrl; // fall back to raw if something unexpected slips through
         }
     }
+
     public Document fetchNoticesPageWithCachedSession() throws IOException {
         Document page = tryFetchWithCachedSession();
 
@@ -437,7 +437,7 @@ public class ScrapeService {
             // cache missing or session expired — log in again
             log.info("Initializing active FOSMIS session...");
             cachedSession = login();
-            page = cachedSession.url(NOTICES_URL).get();
+            page = cachedSession.url(NOTICES_URL).timeout(15_000).get();
         }
 
         if (page.text().contains("You Have Not Permission")) {
@@ -450,15 +450,16 @@ public class ScrapeService {
     private Document tryFetchWithCachedSession() throws IOException {
         if (cachedSession == null)
             return null;
-        return cachedSession.url(NOTICES_URL).get();
+        return cachedSession.url(NOTICES_URL).timeout(15_000).get();
     }
 
     private Connection login() throws IOException {
         Connection session = Jsoup.newSession()
                 .userAgent(USER_AGENT)
+                .timeout(15_000)
                 .header("Accept-Language", "en-US,en;q=0.9");
 
-        session.url(BASE + "index.php").get();
+        session.url(BASE + "index.php").timeout(15_000).get();
 
         session.url(LOGIN_URL)
                 .data("uname", username)
@@ -468,7 +469,5 @@ public class ScrapeService {
 
         return session;
     }
-
-
 
 }
