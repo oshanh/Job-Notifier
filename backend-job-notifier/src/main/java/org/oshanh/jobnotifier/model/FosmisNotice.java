@@ -14,11 +14,11 @@ public class FosmisNotice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String title;
     private LocalDateTime publishedAt;
 
-    @Column(length = 1000, nullable = false)
-    private String link;          // absolute URL — this is our uniqueness key
-
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String link; // absolute URL — this is our uniqueness key
 
 }
