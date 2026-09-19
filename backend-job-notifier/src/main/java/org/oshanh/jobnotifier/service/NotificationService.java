@@ -385,7 +385,7 @@ public class NotificationService {
 					      %s
 					    </div>
 					    <p style="font-size: 12px; color: #999999; margin: 0;">
-					      If you did not request this, please ignore this email.
+					      If you did not request this OTP, please ignore this email.
 					    </p>
 					  </div>
 					</div>
